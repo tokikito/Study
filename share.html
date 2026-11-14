@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>HTML共有URL作成</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 32px 16px;
+        color: #1f2937;
+        background: #f3f4f6;
+        font-family: system-ui, sans-serif;
+      }
+
+      main {
+        width: min(100%, 900px);
+        margin: 0 auto;
+        padding: 24px;
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 1.5rem;
+      }
+
+      p {
+        color: #6b7280;
+      }
+
+      textarea {
+        display: block;
+        width: 100%;
+        min-height: 360px;
+        margin-top: 8px;
+        padding: 16px;
+        resize: vertical;
+        color: #e5e7eb;
+        background: #111827;
+        border: 1px solid #374151;
+        border-radius: 8px;
+        font: 14px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+        tab-size: 2;
+      }
+
+      button {
+        margin-top: 16px;
+        padding: 10px 16px;
+        color: #fff;
+        background: #2563eb;
+        border: 0;
+        border-radius: 6px;
+        font: inherit;
+        cursor: pointer;
+      }
+
+      button:focus-visible,
+      input:focus-visible,
+      textarea:focus-visible {
+        outline: 3px solid #93c5fd;
+        outline-offset: 2px;
+      }
+
+      #share-result {
+        margin-top: 20px;
+      }
+
+      #share-url {
+        display: block;
+        width: 100%;
+        margin-top: 8px;
+        padding: 10px;
+      }
+
+      #share-message {
+        min-height: 1.5em;
+      }
+
+      #shared-view {
+        display: none;
+      }
+
+      body.shared-mode {
+        padding: 0;
+      }
+
+      body.shared-mode main {
+        display: none;
+      }
+
+      body.shared-mode #shared-view {
+        display: block;
+      }
+
+      #shared-toolbar {
+        display: flex;
+        align-items: center;
+        height: 48px;
+        padding: 0 16px;
+        background: #fff;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      #shared-toolbar a {
+        color: #1d4ed8;
+      }
+
+      #shared-content {
+        display: block;
+        width: 100%;
+        height: calc(100vh - 48px);
+        background: #fff;
+        border: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>HTML共有URL作成</h1>
+      <p>HTMLを入力すると、その内容を表示する共有URLを作成します。URLにはHTMLコードが含まれます。公開してよい内容だけを入力してください。</p>
+      <label for="html-input">HTMLコード</label>
+      <textarea id="html-input" placeholder="&lt;h1&gt;こんにちは&lt;/h1&gt;" spellcheck="false"></textarea>
+      <button id="create-link" type="button">共有URLを作成</button>
+      <section id="share-result" aria-live="polite" hidden>
+        <label for="share-url">共有URL</label>
+        <input id="share-url" type="url" readonly>
+        <button id="copy-link" type="button">URLをコピー</button>
+        <p id="share-message"></p>
+      </section>
+    </main>
+    <section id="shared-view" aria-label="共有されたHTML">
+      <div id="shared-toolbar"><a href="./share.html">HTML入力に戻る</a></div>
+      <iframe id="shared-content" title="共有されたHTML" sandbox="allow-scripts allow-forms"></iframe>
+    </section>
+    <script>
+      const htmlInput = document.querySelector("#html-input");
+      const shareResult = document.querySelector("#share-result");
+      const shareUrlInput = document.querySelector("#share-url");
+      const shareMessage = document.querySelector("#share-message");
+
+      function encodeHtml(html) {
+        const bytes = new TextEncoder().encode(html);
+        let binary = "";
+        for (let offset = 0; offset < bytes.length; offset += 0x8000) {
+          binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
+        }
+        return btoa(binary)
+          .replace(/\+/g, "-")
+          .replace(/\//g, "_")
+          .replace(/=+$/, "");
+      }
+
+      function decodeHtml(encoded) {
+        const base64 = encoded.replace(/-/g, "+").replace(/_/g, "/");
+        const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
+        const binary = atob(padded);
+        const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+        return new TextDecoder().decode(bytes);
+      }
+
+      const sharedHtml = new URLSearchParams(window.location.hash.slice(1)).get("html");
+      if (sharedHtml !== null) {
+        document.body.classList.add("shared-mode");
+        try {
+          document.querySelector("#shared-content").srcdoc = decodeHtml(sharedHtml);
+          document.title = "共有HTML";
+        } catch {
+          document.querySelector("#shared-view").textContent =
+            "共有HTMLを読み込めませんでした。URLが正しいか確認してください。";
+        }
+      }
+
+      document.querySelector("#create-link").addEventListener("click", () => {
+        const url = new URL(window.location.href);
+        url.hash = `html=${encodeHtml(htmlInput.value)}`;
+        shareUrlInput.value = url.href;
+        shareResult.hidden = false;
+        shareMessage.textContent = "このURLを開くと、入力したHTMLが表示されます。";
+      });
+
+      document.querySelector("#copy-link").addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(shareUrlInput.value);
+          shareMessage.textContent = "URLをコピーしました。";
+        } catch {
+          shareUrlInput.select();
+          shareMessage.textContent = "自動コピーできませんでした。URLを選択してコピーしてください。";
+        }
+      });
+    </script>
+  </body>
+</html>

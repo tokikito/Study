@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CHAT GPT Apps - Quiz & Gacha Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: #050505;
+            color: white;
+            overflow-x: hidden;
+            user-select: none;
+            min-height: 100dvh;
+        }
+        .bg-grid {
+            background-image: linear-gradient(#1e293b 1px, transparent 1px), linear-gradient(90deg, #1e293b 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        .input-glow:focus {
+            box-shadow: 0 0 20px rgba(34, 211, 238, 0.3);
+            border-color: #22d3ee;
+        }
+ 
+        .gacha-3d-box {
+            position: relative;
+            width: clamp(200px, 48vw, 280px);
+            height: clamp(260px, 62vw, 360px);
+            background: linear-gradient(180deg, #f43f5e 0%, #be123c 60%, #881337 100%);
+            border-radius: clamp(28px, 6vw, 45px) clamp(28px, 6vw, 45px) 20px 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8), inset 0 4px 12px rgba(255,255,255,0.4), 0 0 30px rgba(244,63,94,0.3);
+            border: clamp(3px, 0.8vw, 5px) solid #4c0519;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding-top: clamp(10px, 2.5vw, 18px);
+            transition: all 0.3s ease;
+        }
+ 
+        .gacha-globe {
+            width: clamp(150px, 38vw, 220px);
+            height: clamp(120px, 28vw, 160px);
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 40%, rgba(15,23,42,0.6) 100%);
+            border: clamp(2px, 0.6vw, 4px) solid rgba(255,255,255,0.5);
+            border-radius: 80px 80px 30px 30px;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(2px);
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5), 0 8px 16px rgba(0,0,0,0.3);
+        }
+ 
+        .gacha-globe-inner {
+            position: absolute;
+            inset: 0;
+        }
+ 
+        .capsule-in-globe {
+            position: absolute;
+            width: clamp(20px, 5vw, 28px);
+            height: clamp(20px, 5vw, 28px);
+            border-radius: 50%;
+            box-shadow: inset -2px -2px 4px rgba(0,0,0,0.4), 0 2px 5px rgba(0,0,0,0.5);
+            transition: transform 0.1s ease-out;
+        }
+ 
+        .shake-balls .capsule-in-globe {
+            animation: bounceBalls 0.15s infinite alternate ease-in-out;
+        }
+ 
+        @keyframes bounceBalls {
+            0% { transform: translateY(0) rotate(0deg); }
+            100% { transform: translateY(-25px) rotate(45deg); }
+        }
+ 
+        .gacha-dial-plate {
+            width: clamp(56px, 14vw, 76px);
+            height: clamp(56px, 14vw, 76px);
+            background: radial-gradient(circle, #e2e8f0 0%, #94a3b8 100%);
+            border-radius: 50%;
+            border: 4px solid #334155;
+            margin-top: clamp(6px, 1.5vw, 12px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5), inset 0 2px 4px rgba(255,255,255,0.8);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+ 
+        .gacha-handle {
+            width: clamp(40px, 10vw, 54px);
+            height: clamp(10px, 2.5vw, 16px);
+            background: linear-gradient(180deg, #475569, #0f172a);
+            border-radius: 7px;
+            border: 1px solid #94a3b8;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+ 
+        .gacha-handle.rotate {
+            transform: rotate(360deg);
+        }
+ 
+        .gacha-exit {
+            width: clamp(56px, 14vw, 76px);
+            height: clamp(28px, 6vw, 38px);
+            background: #090d16;
+            border-radius: 20px 20px 5px 5px;
+            border: 3px solid #334155;
+            margin-top: clamp(6px, 1.2vw, 10px);
+            box-shadow: inset 0 6px 10px rgba(0,0,0,0.9);
+            position: relative;
+            overflow: visible;
+        }
+ 
+        .dropped-capsule {
+            width: clamp(52px, 13vw, 72px);
+            height: clamp(52px, 13vw, 72px);
+            border-radius: 50%;
+            cursor: pointer;
+            position: relative;
+            animation: dropBounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.6), 0 0 15px rgba(255,255,255,0.3);
+        }
+ 
+        @keyframes dropBounce {
+            0% { transform: translateY(-60px) scale(0.3); opacity: 0; }
+            70% { transform: translateY(10px) scale(1.1); opacity: 1; }
+            100% { transform: translateY(0) scale(1); opacity: 1; }
+        }
+ 
+        .capsule-half-top {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 50%;
+            border-radius: 32px 32px 0 0;
+            border-bottom: 2px solid rgba(0,0,0,0.3);
+            transition: transform 0.5s ease-out;
+        }
+ 
+        .capsule-half-bottom {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 50%;
+            border-radius: 0 0 32px 32px;
+            background: rgba(255,255,255,0.85);
+            transition: transform 0.5s ease-out;
+        }
+ 
+        .capsule-opened .capsule-half-top {
+            transform: translateY(-25px) rotate(-20deg);
+            opacity: 0;
+        }
+ 
+        .capsule-opened .capsule-half-bottom {
+            transform: translateY(25px) rotate(20deg);
+            opacity: 0;
+        }
+ 
+        .rarity-glow-SSR {
+            animation: rainbowGlow 1.5s infinite linear;
+        }
+        @keyframes rainbowGlow {
+            0% { box-shadow: 0 0 25px #ef4444; }
+            33% { box-shadow: 0 0 25px #eab308; }
+            66% { box-shadow: 0 0 25px #06b6d4; }
+            100% { box-shadow: 0 0 25px #ef4444; }
+        }
+ 
+        #loading-overlay {
+            animation: loadingFailsafe 12s forwards;
+            position: fixed;
+            inset: 0;
+            background: #050505;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease;
+        }
+ 
+        /* JavaScriptが実行されない環境でも、ローディング画面だけで止まり続けないための保険 */
+        @keyframes loadingFailsafe {
+            0%, 85% { opacity: 1; visibility: visible; }
+            100% { opacity: 0; visibility: hidden; pointer-events: none; }
+        }
+
+        @keyframes unitPopIn {
+            0% {
+                opacity: 0;
+                transform: translateY(24px) scale(0.92);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+ 
+        .unit-card-anim {
+            animation: unitPopIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading-overlay">
+        <div class="w-12 h-12 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p class="text-xs font-black tracking-widest text-cyan-400">SYSTEM_INITIALIZING...</p>
+    </div>
+ 
+    <div id="app">
+        <div class="fixed inset-0 opacity-5 pointer-events-none bg-grid"></div>
+ 
+        <div id="sidebar" class="fixed top-0 right-0 h-full w-80 bg-slate-950 border-l border-white/10 z-50 transition-transform duration-300 translate-x-full shadow-2xl overflow-y-auto">
+            <div class="p-6 flex flex-col min-h-full">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xs font-black text-slate-500 tracking-[0.3em]">SETTINGS_HUB</h2>
+                    <button onclick="toggleSidebar()" class="p-2 text-slate-400 hover:text-white rounded-full">✕</button>
+                </div>
+                
+                <div class="space-y-5 flex-1">
+                    <!-- USER SETTINGS -->
+                    <section class="hide-on-playing border border-slate-800 rounded-2xl overflow-hidden bg-slate-900/40">
+                        <button onclick="toggleUserSettings()" class="w-full p-3.5 flex justify-between items-center bg-slate-900/80 hover:bg-slate-800/80 transition-colors text-left">
+                            <span class="text-xs font-bold text-cyan-400 flex items-center gap-2">
+                                <span>👤</span> ユーザー設定
+                            </span>
+                            <span id="userSettingsArrow" class="text-xs text-slate-400 transition-transform duration-200">▼</span>
+                        </button>
+                        <div id="userSettingsContent" class="p-3.5 border-t border-slate-800/80 space-y-3 bg-slate-950/50 hidden">
+                            <p class="text-[10px] font-bold text-slate-400 tracking-widest uppercase">Account & Login ID</p>
+                            
+                            <div class="space-y-1">
+                                <label class="text-[10px] text-slate-400 font-bold block">現在のログインID</label>
+                                <div id="currentLoginIdDisplay" class="text-xs font-mono font-bold text-cyan-400 bg-slate-900 p-2.5 rounded-lg border border-slate-800 break-all select-all">---</div>
+                            </div>
+ 
+                            <div class="space-y-2 pt-2 border-t border-slate-800/80">
+                                <label class="text-[10px] text-slate-400 font-bold block">ログインIDを変更（半角10桁:数字+大文字+小文字）</label>
+                                <input type="text" id="loginIdInput" maxlength="10" placeholder="例: 8aK2mP9xR1" 
+                                       class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white outline-none focus:border-cyan-400 font-mono">
+                                <button onclick="loginWithUserCustomID()" class="w-full py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-lg transition-colors shadow">
+                                    ログイン／切替
+                                </button>
+                                <div class="grid grid-cols-2 gap-2 pt-1">
+                                    <button onclick="openQrScanner()" class="py-2 bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs rounded-lg transition-colors">📷 QRを読み取る</button>
+                                    <button onclick="openQrGenerator()" class="py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg transition-colors">▦ QRを生成</button>
+                                </div>
+                            </div>
+ 
+                            <div id="emailAuthContainer" class="text-[11px] text-slate-300 pt-2 border-t border-slate-800/80">
+                                状態: <span id="loginStatusText" class="text-yellow-400 font-bold">自動生成ID</span>
+                            </div>
+                        </div>
+                    </section>
+ 
+                    <!-- OPINION BOX -->
+                    <section class="hide-on-playing border border-slate-800 rounded-2xl overflow-hidden bg-slate-900/40">
+                        <button onclick="toggleOpinionBox()" class="w-full p-3.5 flex justify-between items-center bg-slate-900/80 hover:bg-slate-800/80 transition-colors text-left">
+                            <span class="text-xs font-bold text-cyan-400 flex items-center gap-2">
+                                <span>📮</span> ご意見箱
+                            </span>
+                            <span id="opinionBoxArrow" class="text-xs text-slate-400 transition-transform duration-200">▼</span>
+                        </button>
+                        <div id="opinionBoxContent" class="p-3.5 border-t border-slate-800/80 space-y-3 bg-slate-950/50 hidden">
+                            <textarea id="opinionInput" rows="4" placeholder="ご意見・リクエストをご記入ください..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white outline-none focus:border-cyan-400 font-mono resize-none"></textarea>
+                            <div class="flex gap-2">
+                                <button onclick="saveOpinionDraft()" class="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs rounded-lg transition-colors">
+                                    下書き保存
+                                </button>
+                                <button onclick="sendOpinion()" class="flex-1 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-lg transition-colors">
+                                    送信
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+ 
+                    <section>
+                        <p class="text-[10px] font-bold text-slate-500 mb-2 tracking-widest uppercase">Audio Control</p>
+                        <button onclick="toggleMute()" id="muteBtn" class="w-full py-3.5 rounded-xl border border-cyan-500/50 bg-cyan-500/5 text-cyan-400 font-bold text-xs">SOUND ON</button>
+                    </section>
+ 
+                    <section class="hide-on-playing">
+                        <p class="text-[10px] font-bold text-slate-500 mb-2 tracking-widest uppercase">Gacha Mode</p>
+                        <button onclick="openGachaGame()" class="w-full py-3.5 rounded-xl border border-yellow-500/50 bg-yellow-500/5 text-yellow-400 font-bold text-xs flex flex-col items-center hover:bg-yellow-500/10 transition-colors">
+                            <span>🎰 GACHA MACHINE</span>
+                            <span class="text-[9px] mt-0.5 opacity-70 italic">100 COINS / PULL</span>
+                        </button>
+                    </section>
+ 
+                    <section class="hide-on-playing border-t border-white/10 pt-4">
+                        <p class="text-[10px] font-bold text-slate-500 mb-1 tracking-widest uppercase">User Unique ID</p>
+                        <p id="displayUid" class="text-[9px] text-slate-600 break-all font-mono mb-4">---</p>
+                    </section>
+ 
+                    <!-- INTERRUPT SECTION -->
+                    <section id="interruptSection" class="hidden">
+                        <p class="text-[10px] font-bold text-slate-500 mb-2 tracking-widest uppercase">Quiz Control</p>
+                        <button onclick="interruptQuiz()" class="w-full py-3.5 rounded-xl border border-red-500/50 bg-red-500/10 text-red-400 font-bold text-xs hover:bg-red-500/20 transition-colors shadow">
+                            🛑 クイズを中断する
+                        </button>
+                    </section>
+                </div>
+                
+                <p class="text-[9px] text-center text-slate-600 font-bold mt-4">CHAT GPT Apps Quiz & Gacha Studio</p>
+            </div>
+        </div>
+ 
+        <main class="relative z-10 w-full max-w-2xl mx-auto p-4 sm:p-6 md:p-12 min-h-[100dvh] flex flex-col justify-between">
+            <div>
+                <!-- Header Component -->
+                <header class="flex justify-between items-center mb-6 sm:mb-8">
+                    <div>
+                        <h1 class="text-xl sm:text-2xl font-black italic tracking-tighter text-white flex items-center gap-2">
+                            <span class="text-cyan-400">⚡</span> CHAT GPT Apps <span class="text-[10px] not-italic text-slate-500 bg-slate-800 px-2 py-0.5 rounded">STUDIO</span>
+                        </h1>
+                        <div class="flex items-center gap-2 mt-2">
+                            <div class="flex items-center gap-1.5 bg-slate-900/80 border border-slate-700/80 px-3 py-1.5 rounded-full shadow-sm">
+                                <span class="text-xs sm:text-sm font-black text-yellow-500">🪙 <span id="goldVal">100</span></span>
+                                <button onclick="openWalletModal()" class="w-5 h-5 flex items-center justify-center bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-400 rounded-full font-bold text-xs transition-all border border-yellow-500/30" title="コインを獲得・交換">＋</button>
+                            </div>
+                            <div class="flex items-center gap-1.5 bg-slate-900/80 border border-slate-700/80 px-3 py-1.5 rounded-full shadow-sm">
+                                <span class="text-xs sm:text-sm font-black text-cyan-400">💎 <span id="ecoVal">0</span></span>
+                                <button onclick="openWalletModal()" class="w-5 h-5 flex items-center justify-center bg-cyan-500/20 hover:bg-cyan-500/40 text-cyan-400 rounded-full font-bold text-xs transition-all border border-cyan-500/30" title="ダイヤを確認">＋</button>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="toggleSidebar()" class="p-3 bg-slate-900 rounded-2xl hover:bg-slate-800 transition-colors border border-slate-800">⚙️</button>
+                </header>
+ 
+                <div id="screen-home" class="space-y-4 sm:space-y-6">
+                    <div class="bg-slate-900/50 p-4 sm:p-6 rounded-3xl border border-white/5 mb-4 shadow-xl">
+                        <p class="text-[10px] font-bold text-cyan-400 mb-2 tracking-widest uppercase">Smart Quiz System</p>
+                        <p class="text-xs sm:text-sm text-slate-300 leading-relaxed italic">教科を選んで単元クイズに挑戦！正解してコインとダイヤを獲得しよう。</p>
+                    </div>
+ 
+                    <div class="relative flex py-2 items-center">
+                        <div class="flex-grow border-t border-slate-800"></div>
+                        <span class="flex-shrink mx-4 text-xs text-slate-500 font-bold uppercase tracking-widest">Select Subject</span>
+                        <div class="flex-grow border-t border-slate-800"></div>
+                    </div>
+ 
+                    <div class="space-y-3">
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            <button onclick="selectSubject('国語')" class="p-3.5 bg-slate-900 border border-red-500/30 hover:border-red-500/80 hover:bg-slate-800 rounded-2xl text-left transition-all font-bold text-xs sm:text-sm text-white flex items-center gap-2 shadow-md group">
+                                <span class="text-xl group-hover:scale-110 transition-transform">📕</span>
+                                <span>国語 <small class="text-cyan-300">500問</small></span>
+                            </button>
+                            <button onclick="selectSubject('数学')" class="p-3.5 bg-slate-900 border border-blue-500/30 hover:border-blue-500/80 hover:bg-slate-800 rounded-2xl text-left transition-all font-bold text-xs sm:text-sm text-white flex items-center gap-2 shadow-md group">
+                                <span class="text-xl group-hover:scale-110 transition-transform">📐</span>
+                                <span>数学</span>
+                            </button>
+                            <button onclick="selectSubject('理科')" class="p-3.5 bg-slate-900 border border-emerald-500/30 hover:border-emerald-500/80 hover:bg-slate-800 rounded-2xl text-left transition-all font-bold text-xs sm:text-sm text-white flex items-center gap-2 shadow-md group">
+                                <span class="text-xl group-hover:scale-110 transition-transform">🧪</span>
+                                <span>理科 <small class="text-emerald-300">100問</small></span>
+                            </button>
+                            <button onclick="selectSubject('社会')" class="p-3.5 bg-slate-900 border border-amber-500/30 hover:border-amber-500/80 hover:bg-slate-800 rounded-2xl text-left transition-all font-bold text-xs sm:text-sm text-white flex items-center gap-2 shadow-md group">
+                                <span class="text-xl group-hover:scale-110 transition-transform">🌍</span>
+                                <span>社会 <small class="text-amber-300">500問</small></span>
+                            </button>
+                            <button onclick="selectSubject('英語')" class="p-3.5 bg-slate-900 border border-purple-500/30 hover:border-purple-500/80 hover:bg-slate-800 rounded-2xl text-left transition-all font-bold text-xs sm:text-sm text-white flex items-center gap-2 shadow-md group">
+                                <span class="text-xl group-hover:scale-110 transition-transform">🔤</span>
+                                <span>英語 <small class="text-purple-300">100問</small></span>
+                            </button>
+                            <button onclick="selectSubject('副教科')" class="p-3.5 bg-slate-900 border border-pink-500/30 hover:border-pink-500/80 hover:bg-slate-800 rounded-2xl text-left transition-all font-bold text-xs sm:text-sm text-white flex items-center gap-2 shadow-md group">
+                                <span class="text-xl group-hover:scale-110 transition-transform">🎨</span>
+                                <span>副教科</span>
+                            </button>
+                        </div>
+                        <button onclick="selectSubject('一般常識')" class="w-full p-3.5 bg-slate-900/60 border border-slate-700/80 hover:bg-slate-800 rounded-2xl text-center transition-all font-bold text-xs text-slate-300">
+                            📘 一般常識クイズ
+                        </button>
+                    </div>
+                </div>
+ 
+                <div id="screen-units" class="hidden space-y-4 sm:space-y-6">
+                    <div class="flex items-center justify-between">
+                        <button onclick="showScreen('home')" class="text-xs font-bold text-slate-400 px-3 py-1.5 border border-slate-800 rounded-xl hover:bg-slate-800 flex items-center gap-1">
+                            <span>◀ 教科選択に戻る</span>
+                        </button>
+                        <span id="selectedSubjectTitle" class="text-lg font-black text-cyan-400">---</span>
+                    </div>
+ 
+                    <div class="bg-slate-900/50 p-4 sm:p-5 rounded-3xl border border-white/5 shadow-xl">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">UNIT SELECTION</p>
+                        <p class="text-xs text-slate-300 italic">挑戦する単元を選択してください（単元ごとに20問）</p>
+                    </div>
+ 
+                    <div id="unitButtonsContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+                </div>
+ 
+                <div id="screen-playing" class="hidden">
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex items-center gap-2">
+                            <span id="subjectTag" class="text-[10px] font-black bg-purple-500 text-white px-3 py-1 uppercase tracking-widest rounded-md">教科</span>
+                            <span id="unitTag" class="text-[10px] font-black bg-slate-800 text-cyan-300 px-3 py-1 uppercase tracking-widest rounded-md">単元</span>
+                        </div>
+                        <span id="qIndicator" class="text-[10px] font-black bg-cyan-400 text-black px-3 py-1 uppercase tracking-widest rounded-md">Q 1/5</span>
+                        <span id="currentScore" class="text-lg sm:text-xl font-black italic text-cyan-400">0 pt</span>
+                    </div>
+ 
+                    <div class="bg-slate-900 border border-slate-800 p-6 sm:p-8 rounded-3xl mb-6 sm:mb-8 text-center min-h-[140px] sm:min-h-[160px] flex items-center justify-center shadow-xl">
+                        <p id="qText" class="text-lg sm:text-xl font-black italic leading-relaxed text-white">問題文がここに表示されます</p>
+                    </div>
+ 
+                    <div class="space-y-4">
+                        <input type="text" id="ansInput" lang="ja" autocomplete="off" placeholder="答えを入力..." 
+                               class="w-full bg-slate-900 border-2 border-slate-800 rounded-2xl p-4 sm:p-5 text-lg sm:text-xl font-black text-center focus:outline-none input-glow transition-all">
+                        
+                        <div id="answerCorrection" class="hidden bg-red-500/10 border border-red-500/50 rounded-2xl p-4 text-center">
+                            <p class="text-[10px] font-bold text-red-400 uppercase tracking-widest mb-1">正解</p>
+                            <p id="correctText" class="text-base sm:text-lg font-black text-red-400"></p>
+                        </div>
+ 
+                        <button onclick="checkAnswer()" id="submitBtn" class="w-full py-4 sm:py-5 bg-white text-black font-black rounded-2xl text-xs sm:text-sm hover:bg-cyan-400 transition-all flex items-center justify-center gap-2 shadow-lg">
+                            <span>回答を送信</span>
+                            <span>ENTER ➔</span>
+                        </button>
+                    </div>
+                </div>
+ 
+                <div id="screen-gacha" class="hidden space-y-4 sm:space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-lg sm:text-xl font-black italic text-yellow-400 flex items-center gap-2">🎰 CYBER_GACHA_3D</h2>
+                        <button onclick="showScreen('home')" class="text-xs font-bold text-slate-400 px-3 py-1.5 border border-slate-800 rounded-xl hover:bg-slate-800">EXIT</button>
+                    </div>
+                    
+                    <div class="bg-slate-900/60 p-3 sm:p-4 rounded-2xl border border-white/10 text-center backdrop-blur-sm">
+                        <p class="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Drop Rates & Rewards</p>
+                        <p class="text-xs font-bold text-cyan-400">SSR (5%): 💎+100  |  SR (25%): 💎+30  |  N (70%): 💎+10</p>
+                    </div>
+ 
+                    <div class="flex flex-col items-center justify-center py-3 sm:py-4 bg-slate-950/80 rounded-3xl border border-slate-800 relative shadow-2xl">
+                        <div class="gacha-3d-box">
+                            <div class="gacha-globe">
+                                <div id="gachaGlobeInner" class="gacha-globe-inner"></div>
+                            </div>
+                            <div class="gacha-dial-plate" onclick="pullGacha()">
+                                <div id="gachaHandle" class="gacha-handle"></div>
+                            </div>
+                            <div class="gacha-exit flex items-center justify-center">
+                                <div id="exitSlotLight" class="w-8 h-2 bg-slate-800 rounded-full"></div>
+                            </div>
+                        </div>
+ 
+                        <div id="gachaDropZone" class="h-20 sm:h-24 w-full flex items-center justify-center mt-2 sm:mt-4">
+                            <p id="gachaPromptText" class="text-xs font-bold text-slate-500 animate-pulse">ハンドルを回してガチャを起動</p>
+                        </div>
+                    </div>
+ 
+                    <button id="btnPullGacha" onclick="pullGacha()" class="w-full py-4 sm:py-5 bg-gradient-to-r from-yellow-500 to-amber-600 text-black rounded-2xl font-black text-base sm:text-lg shadow-xl active:scale-95 hover:brightness-110 transition-all flex items-center justify-center gap-2">
+                        <span>🎰 ガチャを回す [100 COINS]</span>
+                    </button>
+                </div>
+ 
+                <div id="screen-result" class="hidden text-center py-6 sm:py-10">
+                    <div class="text-5xl sm:text-6xl mb-4 sm:mb-6">🏆</div>
+                    <h2 class="text-2xl sm:text-3xl font-black italic mb-4 text-cyan-400">MISSION COMPLETE</h2>
+                    <div id="resSummary" class="text-lg sm:text-xl font-black mb-8 whitespace-pre-line text-slate-200">SCORE: 0 / 5</div>
+                    <button onclick="showScreen('home')" class="w-full py-4 sm:py-5 bg-cyan-500 text-black font-black rounded-2xl shadow-lg hover:bg-cyan-400 transition-all">HOME RETURN</button>
+                </div>
+            </div>
+        </main>
+ 
+        <!-- Global UI Elements -->
+        <div id="globalFeedback" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-[100] text-7xl font-black italic opacity-0 transition-all duration-300"></div>
+    </div>
+ 
+    <div id="modal" class="fixed inset-0 bg-black/80 z-[200] flex items-center justify-center opacity-0 pointer-events-none transition-opacity">
+        <div class="bg-slate-900 p-8 rounded-3xl border border-white/10 max-w-xs w-full text-center shadow-2xl">
+            <div id="modalIcon" class="text-4xl mb-4">⚠️</div>
+            <p id="modalMsg" class="font-bold text-slate-300 mb-6 whitespace-pre-line text-sm"></p>
+            <button onclick="closeModal()" class="w-full py-3 bg-white text-black font-black rounded-xl text-sm">CLOSE</button>
+        </div>
+    </div>
+ 
+    <div id="walletModal" class="fixed inset-0 bg-black/80 z-[200] flex items-center justify-center opacity-0 pointer-events-none transition-opacity">
+        <div class="bg-slate-900 p-6 sm:p-8 rounded-3xl border border-white/10 max-w-sm w-full text-center shadow-2xl relative">
+            <button onclick="closeWalletModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-sm">✕</button>
+            <div class="text-4xl mb-2">🏦</div>
+            <h3 class="font-black text-white text-lg mb-4 tracking-widest">WALLET & EXCHANGE</h3>
+            
+            <div class="flex justify-around items-center bg-slate-950 p-4 rounded-2xl border border-slate-800 mb-6 shadow-inner">
+                <div class="text-center w-1/2">
+                    <p class="text-[10px] text-slate-500 font-bold mb-1 tracking-widest">COINS</p>
+                    <p class="text-xl font-black text-yellow-500">🪙 <span id="walletGoldVal">0</span></p>
+                </div>
+                <div class="w-px h-10 bg-slate-800"></div>
+                <div class="text-center w-1/2">
+                    <p class="text-[10px] text-slate-500 font-bold mb-1 tracking-widest">DIAMONDS</p>
+                    <p class="text-xl font-black text-cyan-400">💎 <span id="walletEcoVal">0</span></p>
+                </div>
+            </div>
+ 
+            <div class="space-y-3">
+                <button onclick="exchangeDiamondsToCoins()" class="w-full py-3 bg-gradient-to-r from-yellow-500 to-amber-500 text-black font-bold rounded-xl text-xs hover:brightness-110 transition-all">
+                    💎 ダイヤ10個 ➔ 🪙 100コインに両替
+                </button>
+                <button onclick="exchangeCoinsToDiamonds()" class="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-black font-bold rounded-xl text-xs hover:brightness-110 transition-all">
+                    🪙 100コイン ➔ 💎 ダイヤ10個に両替
+                </button>
+                <button onclick="claimDailyBonus()" class="w-full py-3 bg-slate-800 text-cyan-400 border border-cyan-500/30 font-bold rounded-xl text-xs hover:bg-slate-700 transition-all">
+                    🎁 デイリーボーナスを受け取る
+                </button>
+            </div>
+        </div>
+    </div>
+ 
+    <!-- QR login / generation dialog -->
+    <div id="qrDialog" class="hidden fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-slate-950 border border-cyan-500/40 rounded-2xl p-5 shadow-2xl">
+            <div class="flex items-center justify-between mb-4">
+                <h2 id="qrDialogTitle" class="text-base font-black text-cyan-300">QRコード</h2>
+                <button onclick="closeQrDialog()" class="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white">✕</button>
+            </div>
+            <p id="qrDialogHelp" class="text-xs text-slate-300 mb-3">ログインIDのQRコード</p>
+            <div id="qrCodeArea" class="hidden bg-white rounded-xl p-4 mx-auto w-fit mb-4"></div>
+            <div id="qrReaderArea" class="hidden overflow-hidden rounded-xl mb-4">
+                <div id="qrReader" class="w-full"></div>
+            </div>
+            <p id="qrDialogStatus" class="text-xs text-slate-400 text-center mb-3"></p>
+            <button id="qrCloseButton" onclick="closeQrDialog()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-bold text-white">閉じる</button>
+        </div>
+    </div>
+ 
+    <script>
+
+        // 埋め込み画面や制限付きiframeでストレージが使えない場合に備える
+        function createSafeStorage(storageName) {
+            const memory = new Map();
+            let nativeStorage = null;
+            try { nativeStorage = window[storageName]; } catch (e) {}
+            return {
+                getItem(key) {
+                    try {
+                        const value = nativeStorage ? nativeStorage.getItem(key) : null;
+                        if (value !== null && value !== undefined) memory.set(String(key), String(value));
+                        return value ?? memory.get(String(key)) ?? null;
+                    } catch (e) {
+                        return memory.get(String(key)) ?? null;
+                    }
+                },
+                setItem(key, value) {
+                    const k = String(key), v = String(value);
+                    memory.set(k, v);
+                    try { if (nativeStorage) nativeStorage.setItem(k, v); } catch (e) {}
+                },
+                removeItem(key) {
+                    memory.delete(String(key));
+                    try { if (nativeStorage) nativeStorage.removeItem(String(key)); } catch (e) {}
+                },
+                clear() {
+                    memory.clear();
+                    try { if (nativeStorage) nativeStorage.clear(); } catch (e) {}
+                }
+            };
+        }
+        const __safeLocalStorage = createSafeStorage('localStorage');
+        const __safeSessionStorage = createSafeStorage('sessionStorage');
+
+        const SERVER_DB_KEY = 'gemini_registered_ids_server';
+        let syncChannel = null;
+        try {
+            if (typeof BroadcastChannel !== 'undefined') {
+                syncChannel = new BroadcastChannel('id_sync_channel');
+            }
+        } catch (e) {
+            console.warn('BroadcastChannel is unavailable; continuing without cross-tab sync.', e);
+        }
+ 
+        function getServerRegisteredIds() {
+            return JSON.parse(__safeLocalStorage.getItem(SERVER_DB_KEY) || '[]');
+        }
+ 
+        function registerIdToServer(id) {
+            const ids = getServerRegisteredIds();
+            if (ids.includes(id)) return false;
+            ids.push(id);
+            __safeLocalStorage.setItem(SERVER_DB_KEY, JSON.stringify(ids));
+            if (syncChannel) syncChannel.postMessage({ type: 'REGISTER', id });
+            return true;
+        }
+ 
+        function removeIdFromServer(id) {
+            if (!id) return;
+            let ids = getServerRegisteredIds();
+            ids = ids.filter(registeredId => registeredId !== id);
+            __safeLocalStorage.setItem(SERVER_DB_KEY, JSON.stringify(ids));
+            if (syncChannel) syncChannel.postMessage({ type: 'REMOVE', id });
+        }
+ 
+        function generate10DigitId() {
+            const nums = '0123456789';
+            const uppers = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            const lowers = 'abcdefghijklmnopqrstuvwxyz';
+            const allChars = nums + uppers + lowers;
+ 
+            let result = [
+                nums.charAt(Math.floor(Math.random() * nums.length)),
+                uppers.charAt(Math.floor(Math.random() * uppers.length)),
+                lowers.charAt(Math.floor(Math.random() * lowers.length))
+            ];
+ 
+            for (let i = 0; i < 7; i++) {
+                result.push(allChars.charAt(Math.floor(Math.random() * allChars.length)));
+            }
+ 
+            return result.sort(() => 0.5 - Math.random()).join('');
+        }
+ 
+        function validate10DigitId(id) {
+            const is10Length = id.length === 10;
+            const hasNum = /[0-9]/.test(id);
+            const hasUpper = /[A-Z]/.test(id);
+            const hasLower = /[a-z]/.test(id);
+            const isAlphaNum = /^[a-zA-Z0-9]+$/.test(id);
+            return is10Length && isAlphaNum && hasNum && hasUpper && hasLower;
+        }
+ 
+        let initialGeneratedId = __safeSessionStorage.getItem('gemini_tab_initial_id') || __safeLocalStorage.getItem('gemini_initial_generated_id') || '';
+        let currentLoginId = __safeLocalStorage.getItem('gemini_current_login_id') || '';
+ 
+        let userGold = parseInt(__safeLocalStorage.getItem('gemini_gold') || '100');
+        let userEco = parseInt(__safeLocalStorage.getItem('gemini_eco') || '10');
+        let soundMuted = false;
+        
+        let currentSubject = '';
+        let currentUnitKey = '';
+        let currentQuestions = [];
+        let qIndex = 0;
+        let score = 0;
+        let gachaSpinning = false;
+        let synth = null;
+        let feedbackTimeout = null;
+ 
+        function initAuthSystem() {
+            if (!initialGeneratedId) {
+                let uniqueFound = false;
+                let newId = '';
+                while (!uniqueFound) {
+                    newId = generate10DigitId();
+                    uniqueFound = registerIdToServer(newId);
+                }
+                initialGeneratedId = newId;
+                __safeSessionStorage.setItem('gemini_tab_initial_id', initialGeneratedId);
+                __safeLocalStorage.setItem('gemini_initial_generated_id', initialGeneratedId);
+            } else {
+                registerIdToServer(initialGeneratedId);
+            }
+ 
+            if (!currentLoginId) {
+                currentLoginId = initialGeneratedId;
+                __safeLocalStorage.setItem('gemini_current_login_id', currentLoginId);
+            }
+ 
+            updateAuthUI();
+        }
+ 
+        function updateAuthUI() {
+            const displayEl = document.getElementById('currentLoginIdDisplay');
+            const uidEl = document.getElementById('displayUid');
+            const statusEl = document.getElementById('loginStatusText');
+ 
+            if (displayEl) displayEl.innerText = currentLoginId;
+            if (uidEl) uidEl.innerText = `ID: ${currentLoginId}`;
+ 
+            if (statusEl) {
+                if (currentLoginId === initialGeneratedId) {
+                    statusEl.innerText = '初回自動生成ID';
+                    statusEl.className = 'text-yellow-400 font-bold';
+                } else {
+                    statusEl.innerText = 'カスタム登録ID';
+                    statusEl.className = 'text-cyan-400 font-bold';
+                }
+            }
+        }
+ 
+        function loginWithUserCustomID() {
+            const inputEl = document.getElementById('loginIdInput');
+            const inputVal = inputEl.value.trim();
+ 
+            if (!validate10DigitId(inputVal)) {
+                openModal('入力エラー', 'ログインIDは【半角数字】【半角大文字】【半角小文字】を含む【10桁】で入力してください。');
+                return;
+            }
+ 
+            if (inputVal === currentLoginId) {
+                openModal('通知', 'すでにこのIDでログインしています。');
+                return;
+            }
+ 
+            registerIdToServer(inputVal);
+ 
+            currentLoginId = inputVal;
+            __safeLocalStorage.setItem('gemini_current_login_id', currentLoginId);
+ 
+            if (initialGeneratedId) {
+                removeIdFromServer(initialGeneratedId);
+            }
+ 
+            inputEl.value = '';
+            updateAuthUI();
+            openModal('ログイン完了', `ログインIDを変更しました。\nID: ${currentLoginId}`);
+        }
+ 
+        let qrScannerInstance = null;
+        let qrScanInProgress = false;
+ 
+        function openQrGenerator() {
+            const dialog = document.getElementById('qrDialog');
+            document.getElementById('qrDialogTitle').innerText = '現在のログインIDをQR生成';
+            document.getElementById('qrDialogHelp').innerText = 'このQRコードには現在のログインID（10桁）のみが入っています。別の端末で読み取ると、そのIDでログインします。';
+            document.getElementById('qrReaderArea').classList.add('hidden');
+            document.getElementById('qrCodeArea').classList.remove('hidden');
+            document.getElementById('qrDialogStatus').innerText = 'ログインID: ' + currentLoginId;
+            document.getElementById('qrCodeArea').innerHTML = '';
+            dialog.classList.remove('hidden');
+ 
+            if (typeof QRCode === 'undefined') {
+                document.getElementById('qrDialogStatus').innerText = 'QR生成ライブラリを読み込めません。インターネット接続を確認してください。';
+                return;
+            }
+            new QRCode(document.getElementById('qrCodeArea'), {
+                text: currentLoginId,
+                width: 220,
+                height: 220,
+                colorDark: '#000000',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.M
+            });
+        }
+ 
+        async function openQrScanner() {
+            const dialog = document.getElementById('qrDialog');
+            document.getElementById('qrDialogTitle').innerText = 'QRコードを読み取ってログイン';
+            document.getElementById('qrDialogHelp').innerText = 'ログインIDのQRコードをカメラに映してください。10桁のIDを読み取ると自動でログインします。';
+            document.getElementById('qrCodeArea').classList.add('hidden');
+            document.getElementById('qrReaderArea').classList.remove('hidden');
+            document.getElementById('qrDialogStatus').innerText = 'カメラを起動しています…';
+            dialog.classList.remove('hidden');
+ 
+            if (typeof Html5Qrcode === 'undefined') {
+                document.getElementById('qrDialogStatus').innerText = 'QR読み取りライブラリを読み込めません。インターネット接続を確認してください。';
+                return;
+            }
+            try {
+                if (qrScannerInstance) {
+                    try { await qrScannerInstance.stop(); } catch (e) {}
+                    try { qrScannerInstance.clear(); } catch (e) {}
+                }
+                qrScannerInstance = new Html5Qrcode('qrReader');
+                qrScanInProgress = false;
+                await qrScannerInstance.start(
+                    { facingMode: 'environment' },
+                    { fps: 10, qrbox: { width: 220, height: 220 }, aspectRatio: 1.0 },
+                    async (decodedText) => {
+                        if (qrScanInProgress) return;
+                        const scannedId = String(decodedText).trim();
+                        if (!validate10DigitId(scannedId)) {
+                            document.getElementById('qrDialogStatus').innerText = '10桁のログインIDではありません。ログインIDのQRを読み取ってください。';
+                            return;
+                        }
+                        qrScanInProgress = true;
+                        document.getElementById('qrDialogStatus').innerText = 'IDを確認しました。ログインしています…';
+                        try { await qrScannerInstance.stop(); } catch (e) {}
+                        closeQrDialog();
+                        const input = document.getElementById('loginIdInput');
+                        input.value = scannedId;
+                        loginWithUserCustomID();
+                    },
+                    () => {}
+                );
+                document.getElementById('qrDialogStatus').innerText = 'QRコードをカメラに映してください。';
+            } catch (err) {
+                document.getElementById('qrDialogStatus').innerText = 'カメラを起動できません。カメラの使用を許可し、HTTPSまたは対応ブラウザで開いてください。';
+            }
+        }
+ 
+        async function closeQrDialog() {
+            if (qrScannerInstance) {
+                try {
+                    if (qrScannerInstance.isScanning) await qrScannerInstance.stop();
+                } catch (e) {}
+                try { qrScannerInstance.clear(); } catch (e) {}
+                qrScannerInstance = null;
+            }
+            document.getElementById('qrDialog').classList.add('hidden');
+            document.getElementById('qrReaderArea').classList.add('hidden');
+            document.getElementById('qrCodeArea').innerHTML = '';
+        }
+ 
+        function initAudio() {
+            if (!synth && typeof Tone !== 'undefined') {
+                try {
+                    synth = new Tone.Synth().toDestination();
+                } catch(e) {
+                    console.log("Audio fallback");
+                }
+            }
+        }
+ 
+        function playSound(type) {
+            if (soundMuted || !synth) return;
+            try {
+                Tone.start();
+                if (type === 'correct') {
+                    synth.triggerAttackRelease("C5", "8n", Tone.now());
+                    synth.triggerAttackRelease("E5", "8n", Tone.now() + 0.1);
+                    synth.triggerAttackRelease("G5", "8n", Tone.now() + 0.2);
+                } else if (type === 'wrong') {
+                    synth.triggerAttackRelease("C3", "8n", Tone.now());
+                    synth.triggerAttackRelease("A2", "8n", Tone.now() + 0.15);
+                } else if (type === 'gacha') {
+                    synth.triggerAttackRelease("G4", "16n", Tone.now());
+                } else if (type === 'ssr') {
+                    synth.triggerAttackRelease("C5", "8n", Tone.now());
+                    synth.triggerAttackRelease("G5", "8n", Tone.now() + 0.1);
+                    synth.triggerAttackRelease("C6", "4n", Tone.now() + 0.2);
+                } else if (type === 'reward') {
+                    synth.triggerAttackRelease("E5", "8n", Tone.now());
+                    synth.triggerAttackRelease("C6", "8n", Tone.now() + 0.1);
+                }
+            } catch(e) {}
+        }
+ 
+        function toggleMute() {
+            soundMuted = !soundMuted;
+            const btn = document.getElementById('muteBtn');
+            if (soundMuted) {
+                btn.innerText = 'SOUND OFF';
+                btn.className = 'w-full py-3.5 rounded-xl border border-slate-500/50 bg-slate-500/5 text-slate-400 font-bold text-xs';
+            } else {
+                btn.innerText = 'SOUND ON';
+                btn.className = 'w-full py-3.5 rounded-xl border border-cyan-500/50 bg-cyan-500/5 text-cyan-400 font-bold text-xs';
+                initAudio();
+            }
+        }
+ 
+        const QUIZ_DATABASE = {"国語":{"アイスプラネット・作品理解":[{"q":"「アイスプラネット」の作者は？","a":["椎名誠"]},{"q":"「アイスプラネット」のような、登場人物や出来事を描く文章の種類は？","a":["物語文"]},{"q":"物語で、出来事を経験する人物を何という？","a":["登場人物"]},{"q":"物語で、出来事の順序や変化を追うときに注目するものは？","a":["展開"]},{"q":"作品を読むとき、人物の発言だけでなく注目したいものは？","a":["行動"]}],"月夜の浜辺・詩の読解":[{"q":"「月夜の浜辺」の作者は？","a":["中原中也"]},{"q":"「月夜の浜辺」の表現形式は？","a":["詩"]},{"q":"詩の中で、目に浮かぶ景色をつくる表現を何という？","a":["情景描写"]},{"q":"詩を読むとき、言葉から読み取る書き手の気持ちを何という？","a":["心情"]},{"q":"詩の一行一行を区切ったまとまりを何という？","a":["行"]}],"詩の表現技法":[{"q":"人でないものを人のように表す技法は？","a":["擬人法"]},{"q":"「まるで〜のようだ」などとたとえる技法は？","a":["直喩"]},{"q":"たとえであることを明示せず、別のものとして表す技法は？","a":["隠喩"]},{"q":"同じ音や言葉を繰り返して印象を強める技法は？","a":["反復法"]},{"q":"音の響きやリズムが生む効果を考えるときに注目するものは？","a":["音読"]}],"物語の構成":[{"q":"物語の最初に、人物や場面を示す部分は？","a":["冒頭"]},{"q":"物語で出来事が大きく動く部分を何という？","a":["山場"]},{"q":"物語の最後で出来事がまとまる部分は？","a":["結末"]},{"q":"物語の中で時間や場所が変わったことを示す手がかりは？","a":["描写"]},{"q":"出来事の原因と結果をつなげて読むことを何という？","a":["因果関係"]}],"人物の心情":[{"q":"人物の気持ちを表す言葉や行動をまとめて何という？","a":["心情表現"]},{"q":"人物の気持ちを直接説明する表現は？","a":["直接描写"]},{"q":"表情や行動から気持ちを推測させる表現は？","a":["間接描写"]},{"q":"気持ちが変わる前と後を比べて読むと分かるものは？","a":["変化"]},{"q":"人物の考えを読み取る根拠として引用するものは？","a":["本文"]}],"説明文の読み方":[{"q":"文章で筆者が最も伝えたい考えは？","a":["主張"]},{"q":"主張を支える具体的な事実や例は？","a":["根拠"]},{"q":"段落の中心となる内容を何という？","a":["要点"]},{"q":"筆者の考えを支える具体例の役割は？","a":["説明"]},{"q":"文章全体を短くまとめたものは？","a":["要約"]}],"論説文と意見":[{"q":"ある問題について筋道を立てて述べる文章は？","a":["論説文"]},{"q":"自分の立場や考えを述べたものは？","a":["意見"]},{"q":"意見を支える理由や資料は？","a":["根拠"]},{"q":"反対の立場から考えた意見は？","a":["反論"]},{"q":"意見と根拠が筋道立ってつながっていることは？","a":["論理"]}],"短歌・俳句":[{"q":"五・七・五・七・七の音数を基本とする定型詩は？","a":["短歌"]},{"q":"五・七・五の音数を基本とする短い詩は？","a":["俳句"]},{"q":"俳句で季節を表す言葉は？","a":["季語"]},{"q":"短歌や俳句で、音の数を数える単位は？","a":["音"]},{"q":"自然や日常の一瞬を短い言葉で表す文学形式は？","a":["定型詩"]}],"漢字の読み書き":[{"q":"「情景」の読みは？","a":["じょうけい"]},{"q":"「根拠」の読みは？","a":["こんきょ"]},{"q":"「推測」の読みは？","a":["すいそく"]},{"q":"「描写」の読みは？","a":["びょうしゃ"]},{"q":"「論理」の読みは？","a":["ろんり"]}],"類義語・対義語":[{"q":"「開始」の対義語は？","a":["終了"]},{"q":"「原因」に対して、起こった結果を表す語は？","a":["結果"]},{"q":"「具体」の対義語は？","a":["抽象"]},{"q":"「賛成」の対義語は？","a":["反対"]},{"q":"「増加」の対義語は？","a":["減少"]}],"ことわざ・慣用句":[{"q":"努力を続ければ成功するという意味のことわざは？","a":["石の上にも三年"]},{"q":"少しの油断が大きな失敗につながるという意味のことわざは？","a":["油断大敵"]},{"q":"互いに助け合うことを表す慣用句は？","a":["手を貸す"]},{"q":"とても忙しい様子を表す慣用句は？","a":["目が回る"]},{"q":"大切なことを見落とす意味の慣用句は？","a":["見落とす"]}],"品詞の基本":[{"q":"物事の動きや状態を表し、活用する品詞は？","a":["動詞"]},{"q":"性質や状態を表し、「い」で終わることが多い品詞は？","a":["形容詞"]},{"q":"性質や状態を表し、「だ」で言い切ることが多い品詞は？","a":["形容動詞"]},{"q":"名詞を詳しく説明する言葉の品詞は？","a":["連体詞"]},{"q":"文と文や語句をつなぐ品詞は？","a":["接続詞"]}],"動詞の活用":[{"q":"「書く」の活用の種類は？","a":["五段活用"]},{"q":"「食べる」の活用の種類は？","a":["下一段活用"]},{"q":"「見る」の活用の種類は？","a":["上一段活用"]},{"q":"「する」の活用の種類は？","a":["サ行変格活用"]},{"q":"「来る」の活用の種類は？","a":["カ行変格活用"]}],"活用形":[{"q":"「書かない」の「書か」の活用形は？","a":["未然形"]},{"q":"「書きます」の「書き」の活用形は？","a":["連用形"]},{"q":"「書く人」の「書く」の活用形は？","a":["連体形"]},{"q":"「書けば」の「書け」の活用形は？","a":["仮定形"]},{"q":"「書け。」の「書け」の活用形は？","a":["命令形"]}],"助詞・助動詞":[{"q":"「私は」の「は」の品詞は？","a":["助詞"]},{"q":"「読んだ」の「だ」が表すものは？","a":["過去"]},{"q":"「行かない」の「ない」の品詞は？","a":["助動詞"]},{"q":"体言に付いて文の主語を示すことがある助詞は？","a":["が"]},{"q":"文末に付いて疑問を表すことがある助詞は？","a":["か"]}],"敬語":[{"q":"相手や話題の人物を高める敬語は？","a":["尊敬語"]},{"q":"自分側の動作をへりくだって表す敬語は？","a":["謙譲語"]},{"q":"聞き手に丁寧に伝える敬語は？","a":["丁寧語"]}],"文の成分":[{"q":"文の中心となる動作や状態を述べる成分は？","a":["述語"]},{"q":"「誰が・何が」にあたる成分は？","a":["主語"]},{"q":"述語の内容を詳しく説明する成分は？","a":["修飾語"]},{"q":"文の中で他の成分を補い説明する成分は？","a":["補助語"]},{"q":"文の中で独立して呼びかけや応答を表す成分は？","a":["独立語"]}],"接続語と指示語":[{"q":"前の内容と反対の内容につなぐ接続語の例は？","a":["しかし"]},{"q":"理由から結論へつなぐ接続語の例は？","a":["だから"]},{"q":"具体例を示す接続語の例は？","a":["たとえば"]},{"q":"前に出た内容を指し示す言葉は？","a":["指示語"]},{"q":"文章の中で指示語が指す内容を探すには何を見る？","a":["前後の文"]}],"古文の基礎":[{"q":"昔の日本語で書かれた文章を何という？","a":["古文"]},{"q":"古文の意味を現代の言葉で表すことは？","a":["現代語訳"]},{"q":"古文で、現在と意味が異なることがある言葉は？","a":["古語"]},{"q":"古文を読むとき、当時の生活や考え方を知る手がかりは？","a":["時代背景"]},{"q":"古文の内容を理解するために確認する語句の意味は？","a":["語注"]}],"文学の用語":[{"q":"物語などで、語り手が出来事を語る立場は？","a":["視点"]},{"q":"同じ意味や内容を持つ言葉を繰り返す表現は？","a":["反復"]},{"q":"わざと反対の言い方をして強調する表現は？","a":["反語"]},{"q":"文章や作品から受ける全体的な感じは？","a":["印象"]},{"q":"作品を通して伝わってくる中心的な考えは？","a":["主題"]}],"話し合い・発表":[{"q":"話し合いで、自分の意見を支える理由を示すことは？","a":["根拠を示す"]},{"q":"相手の発言を正確に理解するために行うことは？","a":["聞き取る"]},{"q":"相手の意見を受けて自分の考えを述べることは？","a":["応答"]},{"q":"発表の要点を短く整理したメモは？","a":["発表メモ"]},{"q":"複数の意見から共通する点を見つけることは？","a":["共通点を整理する"]}],"作文の構成":[{"q":"作文の最初で話題や問題を示す部分は？","a":["序論"]},{"q":"理由や具体例を述べる中心部分は？","a":["本論"]},{"q":"全体をまとめ、考えを締めくくる部分は？","a":["結論"]},{"q":"自分の考えを裏付ける具体的な出来事は？","a":["体験"]},{"q":"書いた文章を読み直して直す作業は？","a":["推敲"]}],"漢字の成り立ち":[{"q":"象形文字の例として、形をかたどった「山」は何を表す？","a":["山の形"]},{"q":"意味を表す部分と音を表す部分を組み合わせた漢字は？","a":["形声文字"]},{"q":"意味を表す部分を何という？","a":["意符"]},{"q":"音を表す部分を何という？","a":["音符"]},{"q":"二つ以上の意味を組み合わせて作られた漢字は？","a":["会意文字"]}],"言葉の意味・語彙":[{"q":"言葉が文脈の中で表す意味は？","a":["文脈上の意味"]},{"q":"一つの言葉が複数の意味を持つことは？","a":["多義"]},{"q":"同じ読みで意味が異なる言葉は？","a":["同音異義語"]},{"q":"意味が似ている言葉は？","a":["類義語"]},{"q":"意味が反対の言葉は？","a":["対義語"]}],"総合読解":[{"q":"答えの根拠を本文の中から探す読み方は？","a":["根拠を探す"]},{"q":"書かれていないことを本文の情報から考えることは？","a":["推論"]},{"q":"段落同士がどのようにつながるかを示すものは？","a":["段落の関係"]},{"q":"筆者の考えと具体例を分けて捉えるとき、具体例は何を支える？","a":["主張"]},{"q":"作品の題名が内容とどう結び付くかを考えることは？","a":["題名の意味"]}],"漢字の読み・書き（応用）":[{"q":"「憂う」の読みは？","a":["うれう"]},{"q":"「著しい」の読みは？","a":["いちじるしい"]},{"q":"「促す」の読みは？","a":["うながす"]},{"q":"「携える」の読みは？","a":["たずさえる"]},{"q":"「趣」の読みは？","a":["おもむき"]},{"q":"「貢献」の読みは？","a":["こうけん"]},{"q":"「慎重」の読みは？","a":["しんちょう"]},{"q":"「承認」の読みは？","a":["しょうにん"]},{"q":"「模索」の読みは？","a":["もさく"]},{"q":"「柔軟」の読みは？","a":["じゅうなん"]}],"文法・品詞と活用（応用）":[{"q":"「美しい」の品詞は？","a":["形容詞"]},{"q":"「静かだ」の品詞は？","a":["形容動詞"]},{"q":"「とても」の品詞は？","a":["副詞"]},{"q":"「しかし」の品詞は？","a":["接続詞"]},{"q":"「あれ」の品詞は？","a":["代名詞"]},{"q":"動詞「書く」の未然形は？","a":["書か"]},{"q":"動詞「書く」の連用形は？","a":["書き"]},{"q":"動詞「書く」の終止形は？","a":["書く"]},{"q":"動詞「書く」の連体形は？","a":["書く"]},{"q":"動詞「書く」の仮定形は？","a":["書け"]}],"古文の基礎（応用）":[{"q":"古文で「いと」が表す意味は？","a":["とても"]},{"q":"古文で「をかし」が表す意味の一つは？","a":["趣がある"]},{"q":"古文で「ありがたし」の古語の意味は？","a":["めったにない"]},{"q":"古文で「うつくし」の意味は？","a":["かわいらしい"]},{"q":"古文で「やがて」の意味は？","a":["そのまま"]},{"q":"古文の「けり」が表すことのある意味は？","a":["過去・詠嘆"]},{"q":"古文の「む」が表すことのある意味は？","a":["推量・意志"]},{"q":"古文で主語を補うときに手がかりとなるものは？","a":["敬語"]},{"q":"和歌の基本的な音数は何音？","a":["五・七・五・七・七"]},{"q":"古文を現代の言葉に直すことを何という？","a":["現代語訳"]}],"詩歌・表現技法（応用）":[{"q":"人ではないものを人のように表す技法は？","a":["擬人法"]},{"q":"「まるで〜のようだ」とたとえる技法は？","a":["直喩"]},{"q":"たとえの言葉を使わずに表す技法は？","a":["隠喩"]},{"q":"同じ音や言葉を繰り返す技法は？","a":["反復法"]},{"q":"音の響きをまねた言葉を何という？","a":["擬音語"]},{"q":"状態や動きを音で表す言葉を何という？","a":["擬態語"]},{"q":"俳句の季節を表す言葉は？","a":["季語"]},{"q":"俳句の基本の音数は？","a":["五・七・五"]},{"q":"短歌の基本の音数は？","a":["五・七・五・七・七"]},{"q":"作者の感情を強く印象づける表現を何という？","a":["強調"]}],"読解・文章構成（応用）":[{"q":"文章で最も伝えたい中心的な考えを何という？","a":["主題"]},{"q":"段落の中心となる文を何という？","a":["中心文"]},{"q":"具体例を挙げて説明することを何という？","a":["例示"]},{"q":"理由を示して考えを支えることを何という？","a":["根拠"]},{"q":"筆者の考えに対して反対の立場を示すことは？","a":["反論"]},{"q":"文章の最後で内容をまとめる部分は？","a":["結論"]},{"q":"文章の初めに話題を示す部分は？","a":["序論"]},{"q":"文章の中心となる説明部分は？","a":["本論"]},{"q":"指示語が指す内容を探すときに注目するものは？","a":["前後の文脈"]},{"q":"複数の情報を比べて共通点や違いを見つけることは？","a":["比較"]}]},"数学":{"正の数・負の数":[{"q":"(-5) + (+8) の計算結果は？","a":["3","+3"]},{"q":"(-4) × (-6) の計算結果は？","a":["24","+24"]},{"q":"(-18) ÷ (+3) の計算結果は？","a":["-6"]},{"q":"絶対値が 5 になる負の数は？","a":["-5"]},{"q":"(-2) の 3乗（3乗）の計算結果は？","a":["-8"]}],"方程式・文字式":[{"q":"x + 7 = 12 のとき、xの値を求めよ。","a":["5"]},{"q":"3x - 5 = 10 のとき、xの値を求めよ。","a":["5"]},{"q":"2x + 4 = x + 9 のとき、xの値を求めよ。","a":["5"]},{"q":"4(x - 2) = 12 のとき、xの値を求めよ。","a":["5"]},{"q":"5x = 25 のとき、xの値を求めよ。","a":["5"]}],"平方根":[{"q":"√25 の値は？","a":["5"]},{"q":"√2 の近似値は？（小数第2位まで、例：1.23）","a":["1.41"]},{"q":"√3 × √3 の計算結果は？","a":["3"]},{"q":"√12 を a√b の形にすると？（例：3√5）","a":["2√3","2√3"]},{"q":"分数で表すことができない数（√2など）を何という？","a":["無理数","むりすう"]}]},"理科":{"化学式と物質":[{"q":"水の化学式は？","a":["H2O"]},{"q":"酸素の化学式は？","a":["O2"]},{"q":"水素の化学式は？","a":["H2"]},{"q":"二酸化炭素の化学式は？","a":["CO2"]},{"q":"窒素の化学式は？","a":["N2"]},{"q":"塩化ナトリウムの化学式は？","a":["NaCl"]},{"q":"アンモニアの化学式は？","a":["NH3"]},{"q":"炭酸カルシウムの化学式は？","a":["CaCO3"]},{"q":"銅の元素記号は？","a":["Cu"]},{"q":"鉄の元素記号は？","a":["Fe"]}],"化学反応と質量":[{"q":"物質が酸素と結びつく化学変化は？","a":["酸化"]},{"q":"酸化物から酸素が取り除かれる変化は？","a":["還元"]},{"q":"化学変化の前後で全体の質量が変わらない法則は？","a":["質量保存の法則"]},{"q":"複数の物質が結びついて別の物質になる反応は？","a":["化合"]},{"q":"一つの物質が複数の物質に分かれる変化は？","a":["分解"]},{"q":"炭素が酸素と十分に反応してできる気体は？","a":["二酸化炭素"]},{"q":"酸化銅を炭素と加熱すると得られる金属は？","a":["銅"]},{"q":"水を電気分解すると発生する二種類の気体は？","a":["水素と酸素"]},{"q":"水素を確認する際に火を近づけると起こる反応は？","a":["音を立てて燃える"]},{"q":"二酸化炭素を石灰水に通すとどうなる？","a":["白くにごる"]}],"電流と電圧":[{"q":"電流の単位は？","a":["アンペア"]},{"q":"電圧の単位は？","a":["ボルト"]},{"q":"電流を測定する器具は？","a":["電流計"]},{"q":"電圧を測定する器具は？","a":["電圧計"]},{"q":"電流計は回路にどのようにつなぐ？","a":["直列"]},{"q":"電圧計は測定する部分にどのようにつなぐ？","a":["並列"]},{"q":"電流の流れを妨げる性質を何という？","a":["電気抵抗"]},{"q":"電気抵抗の単位は？","a":["オーム"]},{"q":"電圧・電流・抵抗の関係を表す法則は？","a":["オームの法則"]},{"q":"電流を流すはたらきをする電源の両端の電位差は？","a":["電圧"]}],"直列回路と並列回路":[{"q":"電流の通り道が一つだけの回路は？","a":["直列回路"]},{"q":"電流の通り道が枝分かれする回路は？","a":["並列回路"]},{"q":"直列回路の各部分を流れる電流はどうなる？","a":["等しい"]},{"q":"並列回路で枝分かれする前の電流は枝の電流とどう関係する？","a":["枝の電流の和"]},{"q":"直列回路の全体の電圧は各部分の電圧とどう関係する？","a":["各部分の電圧の和"]},{"q":"豆電球を直列につなぐと一つが切れた場合、他はどうなる？","a":["消える"]},{"q":"豆電球を並列につなぐと一つが切れた場合、他はどうなる？","a":["点灯し続ける"]},{"q":"電池を直列につなぐと全体の電圧は通常どうなる？","a":["大きくなる"]},{"q":"電池を逆向きに直列につなぐと電圧はどうなる？","a":["打ち消し合う"]}],"電力と電気エネルギー":[{"q":"電力の単位は？","a":["ワット"]},{"q":"電力を求める式は？","a":["電圧×電流"]},{"q":"電力量の単位の一つは？","a":["ジュール"]},{"q":"電気器具が1秒あたりに使う電気エネルギーを表す量は？","a":["電力"]},{"q":"電気エネルギーが熱に変わる現象は？","a":["発熱"]},{"q":"電気エネルギーが光に変わる器具の例は？","a":["電球"]},{"q":"電力が大きい電気器具は、同じ時間なら使う電気エネルギーがどうなる？","a":["大きい"]},{"q":"電流によって磁界ができる現象は？","a":["電流の磁気作用"]},{"q":"コイルに鉄心を入れて電流を流すとできるものは？","a":["電磁石"]},{"q":"電磁石の強さを大きくする方法の一つは？","a":["電流を大きくする"]}],"化学式と化学反応（応用）":[{"q":"水の化学式は？","a":["H2O"]},{"q":"二酸化炭素の化学式は？","a":["CO2"]},{"q":"酸素の化学式は？","a":["O2"]},{"q":"水素の化学式は？","a":["H2"]},{"q":"窒素の化学式は？","a":["N2"]},{"q":"塩化ナトリウムの化学式は？","a":["NaCl"]},{"q":"アンモニアの化学式は？","a":["NH3"]},{"q":"銅の元素記号は？","a":["Cu"]},{"q":"鉄の元素記号は？","a":["Fe"]},{"q":"炭素の元素記号は？","a":["C"]}],"質量保存と化学変化（応用）":[{"q":"化学変化の前後で全体の質量が変わらない法則は？","a":["質量保存の法則"]},{"q":"物質が酸素と結びつく化学変化は？","a":["酸化"]},{"q":"酸化物から酸素が取り除かれる変化は？","a":["還元"]},{"q":"物質が熱や光を出しながら激しく酸化する反応は？","a":["燃焼"]},{"q":"化学変化を原子や分子の記号で表した式は？","a":["化学反応式"]},{"q":"反応前にある物質を何という？","a":["反応物"]},{"q":"反応後にできる物質を何という？","a":["生成物"]},{"q":"鉄が空気中でさびる変化は主に何？","a":["酸化"]},{"q":"炭酸水素ナトリウムを加熱すると発生する気体の一つは？","a":["二酸化炭素"]},{"q":"化学変化で原子そのものは新しくできたり消えたりする？","a":["しない"]}],"電流・電圧・抵抗（応用）":[{"q":"電流の単位は？","a":["アンペア"]},{"q":"電圧の単位は？","a":["ボルト"]},{"q":"電気抵抗の単位は？","a":["オーム"]},{"q":"電流を測る計器は？","a":["電流計"]},{"q":"電圧を測る計器は？","a":["電圧計"]},{"q":"電流計は回路にどうつなぐ？","a":["直列"]},{"q":"電圧計は測る部分にどうつなぐ？","a":["並列"]},{"q":"電圧が一定のとき抵抗が大きいほど電流はどうなる？","a":["小さくなる"]},{"q":"電流が流れにくい性質を何という？","a":["電気抵抗"]},{"q":"電流の向きと電子の移動方向は同じ？","a":["反対"]}],"直列・並列回路（応用）":[{"q":"直列回路を流れる電流は各部分でどうなる？","a":["等しい"]},{"q":"並列回路の各枝にかかる電圧はどうなる？","a":["等しい"]},{"q":"直列回路の全体の電圧は各部分の電圧の何？","a":["和"]},{"q":"並列回路の全体の電流は各枝の電流の何？","a":["和"]},{"q":"並列回路で一つの枝が切れても他の枝はどうなる？","a":["電流が流れる"]},{"q":"直列回路で一か所が切れると回路全体はどうなる？","a":["電流が流れなくなる"]},{"q":"豆電球を並列につなぐと各電球にかかる電圧はどうなる？","a":["同じ"]},{"q":"抵抗を直列につないだとき全体の抵抗は各抵抗の何？","a":["和"]},{"q":"抵抗を並列につないだとき全体の抵抗は各抵抗よりどうなる？","a":["小さくなる"]},{"q":"回路の分かれ道を何という？","a":["枝分かれ"]}],"電力と電力量（応用）":[{"q":"電力を求める式は？","a":["電圧×電流"]},{"q":"電力の単位は？","a":["ワット"]},{"q":"電力量の単位として使われるものは？","a":["ジュール"]},{"q":"電力量を求める式は？","a":["電力×時間"]},{"q":"1キロワットは何ワット？","a":["1000ワット"]},{"q":"電流が流れる時間が長いほど電力量はどうなる？","a":["大きくなる"]},{"q":"電熱線に電流を流すと発生するものは？","a":["熱"]},{"q":"電気器具が1秒あたりに使う電気エネルギーは？","a":["電力"]},{"q":"電力量の実用単位の一つは？","a":["キロワット時"]},{"q":"電力が同じなら使用時間が2倍になると電力量は何倍？","a":["2倍"]}]},"社会":{"縄文時代":[{"q":"縄文時代の代表的な土器は？","a":["縄文土器"]},{"q":"縄文時代の人々が食料を得るために行った、動物を捕らえる活動は？","a":["狩り"]},{"q":"縄文時代に木の実や植物を集める活動は？","a":["採集"]},{"q":"縄文時代に使われた、石を打ち欠いて作る道具は？","a":["打製石器"]},{"q":"縄文時代の人々が住んだ、地面を掘り下げた住居は？","a":["竪穴住居"]}],"弥生時代":[{"q":"弥生時代に広まった主要な農業は？","a":["稲作"]},{"q":"弥生時代の代表的な土器は？","a":["弥生土器"]},{"q":"稲作で収穫した米を保管するための建物は？","a":["高床倉庫"]},{"q":"弥生時代に使われた金属器の一つは？","a":["青銅器"]},{"q":"弥生時代に中国の歴史書に登場する女王は？","a":["卑弥呼"]}],"古墳時代":[{"q":"古墳時代に有力者の墓として築かれたものは？","a":["古墳"]},{"q":"前方後円墳の形は？","a":["前方が四角で後方が円"]},{"q":"古墳の周りなどに並べられた素焼きの人や物の形は？","a":["埴輪"]},{"q":"古墳時代に勢力を広げた大王を中心とする政権は？","a":["ヤマト政権"]},{"q":"大陸から日本へ渡ってきた人々を何という？","a":["渡来人"]}],"飛鳥時代":[{"q":"冠位十二階を定めた人物は？","a":["聖徳太子"]},{"q":"645年に始まった政治改革は？","a":["大化の改新"]},{"q":"大化の改新で中心となった人物の一人は？","a":["中大兄皇子"]},{"q":"遣隋使として隋に派遣された人物は？","a":["小野妹子"]}],"奈良時代":[{"q":"奈良時代の都は？","a":["平城京"]},{"q":"奈良時代に国ごとに置かれた寺は？","a":["国分寺"]},{"q":"東大寺の大仏造立を進めた天皇は？","a":["聖武天皇"]},{"q":"奈良時代に編さんされた日本最古の歴史書は？","a":["古事記"]},{"q":"奈良時代に完成した、国ごとの地理や伝承を記した書物は？","a":["風土記"]}],"平安時代":[{"q":"794年に都を平安京へ移した天皇は？","a":["桓武天皇"]},{"q":"平安時代に発達した、日本独自の文化は？","a":["国風文化"]},{"q":"「源氏物語」の作者は？","a":["紫式部"]},{"q":"「枕草子」の作者は？","a":["清少納言"]},{"q":"摂政・関白として政治の実権を握った一族は？","a":["藤原氏"]}],"平安末期と武士":[{"q":"平氏政権を築き、日宋貿易を進めた人物は？","a":["平清盛"]},{"q":"平氏を壇ノ浦の戦いで破った源氏の人物は？","a":["源義経"]},{"q":"平安時代末期に力を伸ばした武士の集団は？","a":["武士"]},{"q":"平氏が滅亡した戦いは？","a":["壇ノ浦の戦い"]},{"q":"平安末期の争いを題材にした軍記物語は？","a":["平家物語"]}],"鎌倉幕府":[{"q":"鎌倉幕府を開いた人物は？","a":["源頼朝"]},{"q":"将軍と御家人の主従関係を支えた仕組みは？","a":["御恩と奉公"]},{"q":"将軍を補佐し幕府の政治を行った役職は？","a":["執権"]},{"q":"執権として権力を握った一族は？","a":["北条氏"]},{"q":"鎌倉幕府の政治の中心となった都市は？","a":["鎌倉"]}],"元寇と鎌倉幕府の終わり":[{"q":"元が日本に攻めてきた出来事を何という？","a":["元寇"]},{"q":"元寇の際に日本を治めていた執権の一人は？","a":["北条時宗"]},{"q":"元寇後、御家人が不満を強めた主な理由は？","a":["恩賞が不足した"]},{"q":"鎌倉幕府を滅ぼす中心となった天皇は？","a":["後醍醐天皇"]},{"q":"鎌倉幕府が滅亡した年は？","a":["1333年"]}],"室町幕府":[{"q":"室町幕府を開いた人物は？","a":["足利尊氏"]},{"q":"室町幕府の三代将軍は？","a":["足利義満"]},{"q":"足利義満が明と行った貿易は？","a":["日明貿易"]},{"q":"日明貿易で正式な貿易船であることを示すために使ったものは？","a":["勘合"]},{"q":"室町幕府の政治の中心となった京都の地区は？","a":["室町"]}],"室町文化":[{"q":"足利義満の時代に建てられた金閣で知られる建物は？","a":["鹿苑寺"]},{"q":"足利義政の時代に建てられた銀閣で知られる建物は？","a":["慈照寺"]},{"q":"能を大成した人物の一人は？","a":["世阿弥"]},{"q":"水墨画を大成した画僧は？","a":["雪舟"]},{"q":"簡素さや静けさを重んじる室町文化の美意識は？","a":["わび・さび"]}],"戦国時代":[{"q":"戦国時代に各地を支配した有力な大名は？","a":["戦国大名"]},{"q":"戦国大名が領国を治めるために定めた法は？","a":["分国法"]},{"q":"農民や商工業者が団結して自治を行った集団の例は？","a":["惣"]},{"q":"戦国時代に各地で勢力を持った一向宗の信徒の一揆は？","a":["一向一揆"]},{"q":"戦国時代に広まった、鉄砲を用いる戦法が変化させたものは？","a":["戦い方"]}],"織田信長":[{"q":"室町幕府を滅ぼし天下統一を進めた戦国大名は？","a":["織田信長"]},{"q":"織田信長が1575年に武田軍を破った戦いは？","a":["長篠の戦い"]},{"q":"織田信長が商工業を活発にするために進めた政策は？","a":["楽市・楽座"]},{"q":"織田信長が本拠地として築いた城は？","a":["安土城"]},{"q":"織田信長が明智光秀に攻められた事件は？","a":["本能寺の変"]}],"豊臣秀吉":[{"q":"全国統一を完成させた人物は？","a":["豊臣秀吉"]},{"q":"豊臣秀吉が田畑の面積や収穫高を調べた政策は？","a":["太閤検地"]},{"q":"豊臣秀吉が農民から武器を取り上げた政策は？","a":["刀狩"]},{"q":"土地を耕す農民と武士の身分を分ける動きは？","a":["兵農分離"]},{"q":"豊臣秀吉が朝鮮へ大軍を送った戦いは？","a":["朝鮮侵略"]}],"江戸幕府の成立":[{"q":"江戸幕府を開いた人物は？","a":["徳川家康"]},{"q":"江戸幕府が成立した年は？","a":["1603年"]},{"q":"江戸幕府の政治の中心となった都市は？","a":["江戸"]},{"q":"大名を統制するため幕府が定めた法令は？","a":["武家諸法度"]},{"q":"江戸幕府が大名を統制するために行った制度は？","a":["参勤交代"]}],"江戸時代の身分と村":[{"q":"江戸時代に村の運営の中心を担った村役人の代表は？","a":["庄屋"]},{"q":"村の共同作業や決まりを支えた集団のまとまりは？","a":["村"]},{"q":"農民が領主に納めた税は？","a":["年貢"]},{"q":"町人のうち商業を営む人は？","a":["商人"]},{"q":"町人のうち物を作る仕事をする人は？","a":["職人"]}],"江戸時代の外交":[{"q":"江戸幕府がオランダとの貿易を認めた場所は？","a":["出島"]},{"q":"江戸時代に中国との貿易が行われた港は？","a":["長崎"]},{"q":"朝鮮との外交を担った藩は？","a":["対馬藩"]},{"q":"琉球王国との関係を通じて交易した藩は？","a":["薩摩藩"]},{"q":"アイヌの人々との交易を担った藩は？","a":["松前藩"]}],"江戸時代のキリスト教政策":[{"q":"江戸幕府が信者を見つけるために行った方法の一つは？","a":["踏絵"]},{"q":"キリスト教を禁止し、海外との交流を制限した政策は？","a":["禁教・貿易統制"]},{"q":"1637年に九州で起きた大きな反乱は？","a":["島原・天草一揆"]},{"q":"江戸幕府が海外渡航や帰国を厳しく制限した主なねらいの一つは？","a":["幕府の支配を安定させる"]},{"q":"江戸時代に海外との交流を厳しく制限した政策は一般に何と呼ばれる？","a":["鎖国"]}],"江戸時代の改革":[{"q":"享保の改革を行った将軍は？","a":["徳川吉宗"]},{"q":"寛政の改革を行った老中は？","a":["松平定信"]},{"q":"天保の改革を行った老中は？","a":["水野忠邦"]},{"q":"徳川吉宗が裁判の基準などを示した法令は？","a":["公事方御定書"]},{"q":"江戸幕府が財政を立て直すために繰り返し行った政策は？","a":["改革"]}],"江戸時代の学問":[{"q":"日本の古典を研究し日本独自の考え方を探った学問は？","a":["国学"]},{"q":"国学を大成した人物は？","a":["本居宣長"]},{"q":"中国の古典を研究する学問は？","a":["儒学"]},{"q":"西洋の学問や技術をオランダ語を通して学ぶことは？","a":["蘭学"]},{"q":"「解体新書」の翻訳に関わった人物の一人は？","a":["杉田玄白"]}],"江戸時代の文化":[{"q":"元禄文化が栄えた中心地の一つは？","a":["上方"]},{"q":"「奥の細道」を著した俳人は？","a":["松尾芭蕉"]},{"q":"人形浄瑠璃や歌舞伎の脚本で知られる人物は？","a":["近松門左衛門"]},{"q":"化政文化が栄えた中心地は？","a":["江戸"]},{"q":"浮世絵の「富嶽三十六景」で知られる人物は？","a":["葛飾北斎"]}],"開国への道":[{"q":"1792年に根室へ来航したロシアの使節は？","a":["ラクスマン"]},{"q":"1804年に長崎へ来航したロシアの使節は？","a":["レザノフ"]},{"q":"1825年に幕府が外国船を追い払うよう命じた法令は？","a":["異国船打払令"]},{"q":"1837年にアメリカ船をめぐって起きた事件は？","a":["モリソン号事件"]},{"q":"1842年に外国船への対応を改めた法令は？","a":["薪水給与令"]}],"ペリー来航と開国":[{"q":"1853年に浦賀へ来航したアメリカの使節は？","a":["ペリー"]},{"q":"1854年に日本とアメリカが結んだ条約は？","a":["日米和親条約"]},{"q":"日米和親条約で開かれた港の一つは？","a":["下田"]},{"q":"1858年に日本とアメリカが結んだ通商条約は？","a":["日米修好通商条約"]},{"q":"日米修好通商条約で日本が認めた、外国人を自国の法律で裁く権利は？","a":["領事裁判権"]}],"幕末の政治と動き":[{"q":"開国後、幕府に反対する動きで唱えられた考えは？","a":["尊王攘夷"]},{"q":"薩摩藩と長州藩が協力したことを何という？","a":["薩長同盟"]},{"q":"薩長同盟の仲介に関わった人物は？","a":["坂本龍馬"]},{"q":"幕府が政権を朝廷に返した出来事は？","a":["大政奉還"]},{"q":"大政奉還を行った江戸幕府最後の将軍は？","a":["徳川慶喜"]}],"江戸幕府の終わり":[{"q":"江戸幕府が終わるきっかけとなった内戦は？","a":["戊辰戦争"]},{"q":"新政府が政治の基本方針として示した五か条の誓文は何を示したもの？","a":["新政府の方針"]},{"q":"江戸城が新政府軍に明け渡された年は？","a":["1868年"]},{"q":"明治時代が始まる直前の時代は？","a":["江戸時代"]},{"q":"江戸時代末期の日本で政権を返上したのは誰？","a":["徳川慶喜"]}],"縄文・弥生時代（発展）":[{"q":"縄文時代の代表的な土器は？","a":["縄文土器"]},{"q":"縄文時代の住居の代表例は？","a":["竪穴住居"]},{"q":"縄文時代に食料を得る主な方法は？","a":["狩り・漁・採集"]},{"q":"弥生時代に広まった農業は？","a":["稲作"]},{"q":"弥生時代の代表的な土器は？","a":["弥生土器"]},{"q":"稲作の広まりとともに使われた金属器は？","a":["青銅器・鉄器"]},{"q":"弥生時代の大規模な環濠集落の例は？","a":["吉野ヶ里遺跡"]},{"q":"邪馬台国の女王は？","a":["卑弥呼"]},{"q":"卑弥呼が中国に使いを送った国は？","a":["魏"]},{"q":"縄文時代から弥生時代への大きな変化の一つは？","a":["稲作の広まり"]}],"古代国家と文化（発展）":[{"q":"聖徳太子が定めたとされる役人の心構えは？","a":["十七条の憲法"]},{"q":"役人の位を冠の色などで区別した制度は？","a":["冠位十二階"]},{"q":"大化の改新が始まった年は？","a":["645年"]},{"q":"奈良時代の都は？","a":["平城京"]},{"q":"奈良時代に国ごとに置かれた寺は？","a":["国分寺"]},{"q":"東大寺にある大仏を造らせた天皇は？","a":["聖武天皇"]},{"q":"平安京に都を移した天皇は？","a":["桓武天皇"]},{"q":"かな文字の発達に関係が深い文学作品は？","a":["源氏物語"]},{"q":"平安時代に藤原氏が行った政治は？","a":["摂関政治"]},{"q":"平安時代の貴族の住居様式は？","a":["寝殿造"]}],"鎌倉・室町時代（発展）":[{"q":"鎌倉幕府を開いた人物は？","a":["源頼朝"]},{"q":"将軍と主従関係を結んだ武士は？","a":["御家人"]},{"q":"御家人に与えられた土地などに対する保護を何という？","a":["御恩"]},{"q":"御家人が将軍に軍役などで尽くすことは？","a":["奉公"]},{"q":"鎌倉幕府で裁判などを担当した機関は？","a":["問注所"]},{"q":"室町幕府を開いた人物は？","a":["足利尊氏"]},{"q":"室町幕府の将軍を補佐した役職は？","a":["管領"]},{"q":"室町時代に明との間で行われた貿易は？","a":["日明貿易"]},{"q":"日明貿易で正式な船であることを示す札は？","a":["勘合"]},{"q":"室町時代に自治を行った村の集まりは？","a":["惣"]}],"戦国・安土桃山時代（発展）":[{"q":"織田信長が今川義元を破った戦いは？","a":["桶狭間の戦い"]},{"q":"織田信長が築いた城は？","a":["安土城"]},{"q":"豊臣秀吉が全国の田畑を調べた政策は？","a":["太閤検地"]},{"q":"豊臣秀吉が農民から武器を取り上げた政策は？","a":["刀狩"]},{"q":"土地の面積や収穫量を統一した基準で調べることは？","a":["検地"]},{"q":"武士と農民の身分を分ける政策は？","a":["兵農分離"]},{"q":"豊臣秀吉が朝鮮に出兵した戦いは？","a":["文禄・慶長の役"]},{"q":"安土桃山文化を代表する豪華な建築装飾は？","a":["障壁画"]},{"q":"織田信長が商工業を活発にするために進めた政策は？","a":["楽市・楽座"]},{"q":"豊臣秀吉が全国統一を完成させた時期は？","a":["16世紀末"]}],"江戸後期・幕末（発展）":[{"q":"江戸幕府が外国船を打ち払う方針を出した法令は？","a":["異国船打払令"]},{"q":"日本に開国を求めて来航したアメリカの使節は？","a":["ペリー"]},{"q":"日米和親条約が結ばれた年は？","a":["1854年"]},{"q":"日米修好通商条約が結ばれた年は？","a":["1858年"]},{"q":"幕末に幕府を倒そうとした動きを何という？","a":["倒幕運動"]},{"q":"薩摩藩と長州藩が結んだ同盟は？","a":["薩長同盟"]},{"q":"薩長同盟の仲立ちをした人物は？","a":["坂本龍馬"]},{"q":"江戸幕府最後の将軍は？","a":["徳川慶喜"]},{"q":"政権を朝廷に返した出来事は？","a":["大政奉還"]},{"q":"江戸幕府が終わるきっかけとなった新政府との戦争は？","a":["戊辰戦争"]}]},"英語":{"Lesson 4 語彙・水と生活":[{"q":"「水」を英語で？","a":["water"]},{"q":"「きれいな」を英語で？","a":["clean"]},{"q":"「安全な」を英語で？","a":["safe"]},{"q":"「飲む」を英語で？","a":["drink"]},{"q":"「川」を英語で？","a":["river"]},{"q":"「湖」を英語で？","a":["lake"]},{"q":"「海」を英語で？","a":["sea"]},{"q":"「必要な」を英語で？","a":["necessary"]},{"q":"「使う」を英語で？","a":["use"]},{"q":"「人々」を英語で？","a":["people"]}],"Lesson 4 語彙・家事と日常":[{"q":"「洗濯をする」を英語で？","a":["do the laundry"]},{"q":"「料理をする」を英語で？","a":["cook"]},{"q":"「掃除する」を英語で？","a":["clean"]},{"q":"「皿」を英語で？","a":["dish"]},{"q":"「シャワー」を英語で？","a":["shower"]},{"q":"「浴室」を英語で？","a":["bathroom"]},{"q":"「毎日」を英語で？","a":["every day"]},{"q":"「節約する」を英語で？","a":["save"]},{"q":"「時間」を英語で？","a":["time"]},{"q":"「助ける」を英語で？","a":["help"]}],"Lesson 4 文法・There is/are":[{"q":"「机の上に本が1冊あります」There ( ) a book on the desk.","a":["is"]},{"q":"「部屋に椅子が2脚あります」There ( ) two chairs in the room.","a":["are"]},{"q":"There is の後ろに置く名詞は基本的に単数？複数？","a":["単数"]},{"q":"There are の後ろに置く名詞は基本的に単数？複数？","a":["複数"]},{"q":"There are の短縮形は一般に何？","a":["There’re"]},{"q":"「教室に生徒が何人かいます」There are ( ) students in the classroom.","a":["some"]},{"q":"There is/are は存在を表す日本語のどんな表現に対応する？","a":["〜があります／います"]}],"Lesson 4 文法・動名詞":[{"q":"「洗濯をすること」を英語で？","a":["doing the laundry"]},{"q":"動詞に -ing をつけて「〜すること」を表す形は？","a":["動名詞"]},{"q":"「私は料理をすることが好きです」I like ( ) .（cookを適切な形に）","a":["cooking"]},{"q":"「彼は泳ぐことが好きです」He likes ( ).（swimを適切な形に）","a":["swimming"]},{"q":"「読むことは楽しいです」( ) is fun.（readを適切な形に）","a":["Reading"]},{"q":"動名詞は動詞の原形に何をつけて作る？","a":["-ing"]},{"q":"「私は皿を洗うことが好きです」I like ( ) the dishes.","a":["washing"]},{"q":"「彼女は歌うことが好きです」She likes ( ).","a":["singing"]},{"q":"「歩くこと」を英語で、動名詞を使って？","a":["walking"]},{"q":"「勉強すること」を英語で、動名詞を使って？","a":["studying"]}],"Lesson 4 文法・have to":[{"q":"「私は宿題をしなければなりません」I ( ) to do my homework.","a":["have"]},{"q":"「彼は早く起きなければなりません」He ( ) to get up early.","a":["has"]},{"q":"have to の意味は？","a":["〜しなければならない"]},{"q":"「私は行く必要がありません」I ( ) have to go.","a":["do not"]},{"q":"「彼女は料理する必要がありません」She ( ) have to cook.","a":["does not"]},{"q":"「あなたは水を買わなければなりませんか」( ) you have to buy water?","a":["Do"]},{"q":"「彼は来なければなりませんか」( ) he have to come?","a":["Does"]},{"q":"don’t have to の意味は「〜してはいけない」か「〜する必要がない」か？","a":["〜する必要がない"]}],"Lesson 4関連・語彙応用":[{"q":"「節水する」を英語で言うと？","a":["save water"]},{"q":"「水をむだにする」を英語で言うと？","a":["waste water"]},{"q":"「環境」を英語で言うと？","a":["environment"]},{"q":"「再利用する」を英語で言うと？","a":["reuse"]},{"q":"「資源」を英語で言うと？","a":["resource"]},{"q":"「必要な」を英語で言うと？","a":["necessary"]},{"q":"「毎日の」を英語で言うと？","a":["daily"]},{"q":"「手伝う」を英語で言うと？","a":["help"]},{"q":"「皿を洗う」を英語で言うと？","a":["wash the dishes"]},{"q":"「ごみを出す」を英語で言うと？","a":["take out the garbage"]}],"Lesson 4関連・日常表現":[{"q":"「洗濯をする」を英語で言うと？","a":["do the laundry"]},{"q":"「部屋を掃除する」を英語で言うと？","a":["clean the room"]},{"q":"「料理をする」を英語で言うと？","a":["cook"]},{"q":"「買い物に行く」を英語で言うと？","a":["go shopping"]},{"q":"「朝食を作る」を英語で言うと？","a":["make breakfast"]},{"q":"「家事」を英語で言うと？","a":["housework"]},{"q":"「手伝い」を英語で言うと？","a":["help"]},{"q":"「一緒に」を英語で言うと？","a":["together"]},{"q":"「〜の後で」を英語で言うと？","a":["after"]},{"q":"「〜の前に」を英語で言うと？","a":["before"]}],"There is/are（応用）":[{"q":"「机の上に本が1冊あります」を英語で言うと？","a":["There is a book on the desk."]},{"q":"「箱の中にりんごが3個あります」を英語で言うと？","a":["There are three apples in the box."]},{"q":"There is の後に続く名詞は基本的に単数・複数のどちら？","a":["単数"]},{"q":"There are の後に続く名詞は基本的に単数・複数のどちら？","a":["複数"]},{"q":"「公園には犬がいません」を英語で言うと？","a":["There is no dog in the park."]},{"q":"「教室に生徒は何人いますか」を英語で始めると？","a":["How many students are there"]},{"q":"There is a pen. を疑問文にすると？","a":["Is there a pen?"]},{"q":"There are some chairs. を否定文にすると？","a":["There are not any chairs."]},{"q":"「近くに駅があります」を英語で言うと？","a":["There is a station nearby."]},{"q":"There are two cats. の主語にあたる表現は？","a":["There"]}],"動名詞（応用）":[{"q":"「泳ぐこと」を英語で言うと？","a":["swimming"]},{"q":"「読書すること」を英語で言うと？","a":["reading"]},{"q":"「私は料理をすることが好きです」を英語で言うと？","a":["I like cooking."]},{"q":"「彼はサッカーをすることを楽しみます」を英語で言うと？","a":["He enjoys playing soccer."]},{"q":"動詞のing形が名詞の働きをする形は？","a":["動名詞"]},{"q":"「歌うことは楽しいです」を英語で言うと？","a":["Singing is fun."]},{"q":"「私は走ることをやめました」を英語で言うと？","a":["I stopped running."]},{"q":"動名詞を目的語にとる動詞 enjoy の意味は？","a":["楽しむ"]},{"q":"「料理をすること」を表す cook の動名詞は？","a":["cooking"]},{"q":"「彼女は踊ることが好きです」を英語で言うと？","a":["She likes dancing."]}],"have to / must（応用）":[{"q":"「私は宿題をしなければなりません」を have to で言うと？","a":["I have to do my homework."]},{"q":"「彼は早く起きなければなりません」を英語で言うと？","a":["He has to get up early."]},{"q":"have to の三人称単数現在形は？","a":["has to"]},{"q":"「行く必要はありません」を英語で言うと？","a":["You do not have to go."]},{"q":"must の否定形 must not が表す意味は？","a":["してはいけない"]},{"q":"have to の疑問文で文頭に置く助動詞は？","a":["Do"]},{"q":"「彼女は料理しなければなりません」を英語で言うと？","a":["She has to cook."]},{"q":"must が表す意味は？","a":["〜しなければならない"]},{"q":"「ここで走ってはいけません」を英語で言うと？","a":["You must not run here."]},{"q":"一般動詞の前に置いて義務を表す表現は？","a":["have to"]}]},"副教科":{"保健体育・音楽・美術":[{"q":"音楽：ト音記号の「ト」音はドレミのどれ？","a":["ソ","そ"]},{"q":"美術：色の三原色はシアン、マゼンタと何色？","a":["イエロー","黄色","きいろ"]},{"q":"体育：4人でバトンをつなぐ陸上種目は？","a":["リレー"]},{"q":"音楽：フォルテ（f）の意味は？（強く／弱く）","a":["強く","つよく"]},{"q":"技術：乾電池を直列につなぐと電圧は？（高くなる／変わらない）","a":["高くなる","たかくなる"]}],"保健体育":[{"q":"運動前に体を温める準備運動を何という？","a":["ウォーミングアップ"]},{"q":"運動後に体を整える軽い運動を何という？","a":["クールダウン"]},{"q":"骨と骨をつなぐ部分を何という？","a":["関節"]},{"q":"筋肉が縮んで力を出す働きを何という？","a":["筋収縮"]},{"q":"運動中に水分を補給する主な目的は？","a":["脱水を防ぐ"]},{"q":"体力を高めるために継続して行う運動を何という？","a":["トレーニング"]},{"q":"心臓から全身へ血液を送る血管は？","a":["動脈"]},{"q":"全身から心臓へ血液を戻す血管は？","a":["静脈"]},{"q":"健康を保つために必要な休養の一つは？","a":["睡眠"]},{"q":"感染症の予防で基本となる行動の一つは？","a":["手洗い"]},{"q":"運動の強さを表す指標の一つは？","a":["運動強度"]},{"q":"体温調節で汗が蒸発すると体から何が奪われる？","a":["熱"]}],"音楽":[{"q":"五線譜で音の高さを示す記号は？","a":["音部記号"]},{"q":"ト音記号が示す音の基準は？","a":["トの音"]},{"q":"音をだんだん強くする記号は？","a":["クレッシェンド"]},{"q":"音をだんだん弱くする記号は？","a":["デクレッシェンド"]},{"q":"速さを表す音楽用語は？","a":["テンポ"]},{"q":"音の強弱を表すことを何という？","a":["強弱"]},{"q":"複数の異なる旋律を組み合わせることは？","a":["対位法"]},{"q":"楽器や声の音色の違いを何という？","a":["音色"]},{"q":"曲のまとまりを表す区切りは？","a":["フレーズ"]},{"q":"合唱で複数のパートが同時に歌うことは？","a":["ハーモニー"]},{"q":"弦を弓でこすって音を出す楽器の例は？","a":["バイオリン"]},{"q":"木管楽器の一つでリードを使う楽器は？","a":["クラリネット"]}],"美術":[{"q":"色の三要素のうち、色の明るさを表すものは？","a":["明度"]},{"q":"色の三要素のうち、色みを表すものは？","a":["色相"]},{"q":"色の三要素のうち、鮮やかさを表すものは？","a":["彩度"]},{"q":"赤・黄・青など色みの違いを円形に並べたものは？","a":["色相環"]},{"q":"遠くのものを小さく描く表現に関係する考え方は？","a":["遠近法"]},{"q":"光が当たる部分と影の違いを表すことは？","a":["明暗"]},{"q":"絵の具を水で溶いて透明感を出す技法は？","a":["水彩"]},{"q":"物の形や立体感を線で表す描画は？","a":["デッサン"]},{"q":"作品をつくる前に構図を考える小さな下絵は？","a":["スケッチ"]},{"q":"立体作品で材料を削って形をつくる方法は？","a":["彫刻"]},{"q":"色相環で向かい合う位置にある色の関係は？","a":["補色"]},{"q":"画面の中で視線を集める中心となる部分は？","a":["主役"]}],"技術・家庭":[{"q":"木材を切るときに使う代表的な道具は？","a":["のこぎり"]},{"q":"木材の表面を滑らかにする道具は？","a":["紙やすり"]},{"q":"回路を開閉して電流を流したり止めたりする部品は？","a":["スイッチ"]},{"q":"電気を通しやすい物質を何という？","a":["導体"]},{"q":"電気を通しにくい物質を何という？","a":["絶縁体"]},{"q":"食品の安全を守るために確認する期限の一つは？","a":["消費期限"]},{"q":"食品を長く保存する方法の一つは？","a":["冷凍"]},{"q":"栄養素のうち体をつくる主な材料となるものは？","a":["たんぱく質"]},{"q":"衣服のサイズを選ぶときに確認する寸法の一つは？","a":["身長"]},{"q":"洗濯表示で桶のマークが示すことは？","a":["洗濯方法"]},{"q":"家庭内で電気を安全に使うために避けることは？","a":["ぬれた手でプラグに触ること"]},{"q":"食中毒予防の三原則の一つは？","a":["菌をつけない"]}]},"一般常識":{"常識クイズ":[{"q":"1年は何ヶ月？","a":["12","12ヶ月","12か月"]},{"q":"富士山の標高はおよそ何メートル？","a":["3776","3776m"]},{"q":"信号機の色で「停止」を表すのは？","a":["赤","赤色","あか"]},{"q":"1分間は何秒？","a":["60","60秒"]},{"q":"地球の周りを回っている天然の衛星は？","a":["月","つき"]}]},"平方根":{"平方根を求める":[{"q":"√√4 を求めなさい。","a":["2"]},{"q":"√√9 を求めなさい。","a":["3"]},{"q":"√√16 を求めなさい。","a":["4"]},{"q":"√√25 を求めなさい。","a":["5"]},{"q":"√√36 を求めなさい。","a":["6"]},{"q":"√√49 を求めなさい。","a":["7"]},{"q":"√√64 を求めなさい。","a":["8"]},{"q":"√√81 を求めなさい。","a":["9"]},{"q":"√√100 を求めなさい。","a":["10"]},{"q":"√√121 を求めなさい。","a":["11"]},{"q":"√√144 を求めなさい。","a":["12"]},{"q":"√√169 を求めなさい。","a":["13"]},{"q":"√√196 を求めなさい。","a":["14"]},{"q":"√√225 を求めなさい。","a":["15"]},{"q":"√√256 を求めなさい。","a":["16"]},{"q":"√√289 を求めなさい。","a":["17"]},{"q":"√√324 を求めなさい。","a":["18"]},{"q":"√√361 を求めなさい。","a":["19"]},{"q":"√√400 を求めなさい。","a":["20"]},{"q":"√√441 を求めなさい。","a":["21"]}],"小数・分数・符号":[{"q":"次を計算しなさい：0","a":["0"]},{"q":"次を計算しなさい：1","a":["1"]},{"q":"次を計算しなさい：0.04","a":["0.2"]},{"q":"次を計算しなさい：0.09","a":["0.3"]},{"q":"次を計算しなさい：0.25","a":["0.5"]},{"q":"次を計算しなさい：0.36","a":["0.6"]},{"q":"次を計算しなさい：0.49","a":["0.7"]},{"q":"次を計算しなさい：0.81","a":["0.9"]},{"q":"次を計算しなさい：1.44","a":["1.2"]},{"q":"次を計算しなさい：2.25","a":["1.5"]},{"q":"次を計算しなさい：(-9)^2","a":["9"]},{"q":"次を計算しなさい：−√(9^2)","a":["−9"]},{"q":"次を計算しなさい：−√16","a":["−4"]},{"q":"次を計算しなさい：((-5)^2)の平方根の正の方","a":["5"]},{"q":"次を計算しなさい：−√((-4)^2)","a":["−4"]},{"q":"次を計算しなさい：(0.7)^2の平方根の正の方","a":["0.7"]},{"q":"次を計算しなさい：−√(0.3^2)","a":["−0.3"]},{"q":"次を計算しなさい：4/9","a":["2/3"]},{"q":"次を計算しなさい：9/16","a":["3/4"]},{"q":"次を計算しなさい：−√(25/36)","a":["−5/6"]}],"根号を簡単にする":[{"q":"√8 を簡単にしなさい。","a":["2√2"]},{"q":"√12 を簡単にしなさい。","a":["2√3"]},{"q":"√18 を簡単にしなさい。","a":["3√2"]},{"q":"√20 を簡単にしなさい。","a":["2√5"]},{"q":"√27 を簡単にしなさい。","a":["3√3"]},{"q":"√28 を簡単にしなさい。","a":["2√7"]},{"q":"√32 を簡単にしなさい。","a":["4√2"]},{"q":"√45 を簡単にしなさい。","a":["3√5"]},{"q":"√48 を簡単にしなさい。","a":["4√3"]},{"q":"√50 を簡単にしなさい。","a":["5√2"]},{"q":"√54 を簡単にしなさい。","a":["3√6"]},{"q":"√63 を簡単にしなさい。","a":["3√7"]},{"q":"√72 を簡単にしなさい。","a":["6√2"]},{"q":"√75 を簡単にしなさい。","a":["5√3"]},{"q":"√80 を簡単にしなさい。","a":["4√5"]},{"q":"√98 を簡単にしなさい。","a":["7√2"]},{"q":"√108 を簡単にしなさい。","a":["6√3"]},{"q":"√112 を簡単にしなさい。","a":["4√7"]},{"q":"√125 を簡単にしなさい。","a":["5√5"]},{"q":"√147 を簡単にしなさい。","a":["7√3"]}],"根号の乗法":[{"q":"√2×√3 を計算しなさい。","a":["√6"]},{"q":"√2×√5 を計算しなさい。","a":["√10"]},{"q":"√3×√6 を計算しなさい。","a":["3√2"]},{"q":"√5×√10 を計算しなさい。","a":["5√2"]},{"q":"2√3×√2 を計算しなさい。","a":["2√6"]},{"q":"3√2×2√5 を計算しなさい。","a":["6√10"]},{"q":"√6×√6 を計算しなさい。","a":["6"]},{"q":"√7×√14 を計算しなさい。","a":["7√2"]},{"q":"2√5×3√10 を計算しなさい。","a":["30√2"]},{"q":"4√2×√8 を計算しなさい。","a":["8"]},{"q":"√12×√3 を計算しなさい。","a":["6"]},{"q":"√8×√6 を計算しなさい。","a":["4√3"]},{"q":"√15×√5 を計算しなさい。","a":["5√3"]},{"q":"√18×√2 を計算しなさい。","a":["6"]},{"q":"√20×√5 を計算しなさい。","a":["10"]},{"q":"2√6×√3 を計算しなさい。","a":["6√2"]},{"q":"3√7×√14 を計算しなさい。","a":["21√2"]},{"q":"√24×√6 を計算しなさい。","a":["12"]},{"q":"√27×√12 を計算しなさい。","a":["18"]},{"q":"√50×√2 を計算しなさい。","a":["10"]}],"根号の除法":[{"q":"√6÷√2 を計算しなさい。","a":["√3"]},{"q":"√15÷√3 を計算しなさい。","a":["√5"]},{"q":"√20÷√5 を計算しなさい。","a":["2"]},{"q":"√24÷√6 を計算しなさい。","a":["2"]},{"q":"√45÷√5 を計算しなさい。","a":["3"]},{"q":"√56÷√7 を計算しなさい。","a":["2√2"]},{"q":"√72÷√2 を計算しなさい。","a":["6"]},{"q":"√63÷√7 を計算しなさい。","a":["3"]},{"q":"√80÷√5 を計算しなさい。","a":["4"]},{"q":"√98÷√2 を計算しなさい。","a":["7"]},{"q":"2√12÷√3 を計算しなさい。","a":["4"]},{"q":"3√18÷√2 を計算しなさい。","a":["9"]},{"q":"√50÷√2 を計算しなさい。","a":["5"]},{"q":"√27÷√3 を計算しなさい。","a":["3"]},{"q":"√48÷√3 を計算しなさい。","a":["4"]},{"q":"√75÷√3 を計算しなさい。","a":["5"]},{"q":"√108÷√3 を計算しなさい。","a":["6"]},{"q":"√32÷√2 を計算しなさい。","a":["4"]},{"q":"√125÷√5 を計算しなさい。","a":["5"]},{"q":"√147÷√3 を計算しなさい。","a":["7"]}],"a√b の形にする":[{"q":"√12 を a√b の形にしなさい。","a":["2√3"]},{"q":"√20 を a√b の形にしなさい。","a":["2√5"]},{"q":"√45 を a√b の形にしなさい。","a":["3√5"]},{"q":"√72 を a√b の形にしなさい。","a":["6√2"]},{"q":"√98 を a√b の形にしなさい。","a":["7√2"]},{"q":"√200 を a√b の形にしなさい。","a":["10√2"]},{"q":"√300 を a√b の形にしなさい。","a":["10√3"]},{"q":"√500 を a√b の形にしなさい。","a":["10√5"]},{"q":"√108 を a√b の形にしなさい。","a":["6√3"]},{"q":"√192 を a√b の形にしなさい。","a":["8√3"]},{"q":"√75 を a√b の形にしなさい。","a":["5√3"]},{"q":"√147 を a√b の形にしなさい。","a":["7√3"]},{"q":"√180 を a√b の形にしなさい。","a":["6√5"]},{"q":"√245 を a√b の形にしなさい。","a":["7√5"]},{"q":"√320 を a√b の形にしなさい。","a":["8√5"]},{"q":"√363 を a√b の形にしなさい。","a":["11√3"]},{"q":"√432 を a√b の形にしなさい。","a":["12√3"]},{"q":"√448 を a√b の形にしなさい。","a":["8√7"]},{"q":"√675 を a√b の形にしなさい。","a":["15√3"]},{"q":"√700 を a√b の形にしなさい。","a":["10√7"]}],"分母の有理化":[{"q":"1/√2 の分母を有理化しなさい。","a":["√2/2"]},{"q":"1/√3 の分母を有理化しなさい。","a":["√3/3"]},{"q":"2/√5 の分母を有理化しなさい。","a":["2√5/5"]},{"q":"3/√2 の分母を有理化しなさい。","a":["3√2/2"]},{"q":"4/√3 の分母を有理化しなさい。","a":["4√3/3"]},{"q":"5/√6 の分母を有理化しなさい。","a":["5√6/6"]},{"q":"√2/√3 の分母を有理化しなさい。","a":["√6/3"]},{"q":"√3/√5 の分母を有理化しなさい。","a":["√15/5"]},{"q":"2√3/√7 の分母を有理化しなさい。","a":["2√21/7"]},{"q":"5/(2√2) の分母を有理化しなさい。","a":["5√2/4"]},{"q":"3/(2√3) の分母を有理化しなさい。","a":["√3/2"]},{"q":"4/(3√2) の分母を有理化しなさい。","a":["2√2/3"]},{"q":"6/√10 の分母を有理化しなさい。","a":["3√10/5"]},{"q":"√5/(2√3) の分母を有理化しなさい。","a":["√15/6"]},{"q":"2/(3√5) の分母を有理化しなさい。","a":["2√5/15"]},{"q":"7/√14 の分母を有理化しなさい。","a":["√14/2"]},{"q":"√6/√2 の分母を有理化しなさい。","a":["√3"]},{"q":"√10/√5 の分母を有理化しなさい。","a":["√2"]},{"q":"3√2/√6 の分母を有理化しなさい。","a":["√3"]},{"q":"4√5/√20 の分母を有理化しなさい。","a":["2"]}],"乗法・除法のまとめ":[{"q":"√2×√8 を計算しなさい。","a":["4"]},{"q":"√3×√12 を計算しなさい。","a":["6"]},{"q":"√5×√20 を計算しなさい。","a":["10"]},{"q":"√6×√24 を計算しなさい。","a":["12"]},{"q":"√7×√28 を計算しなさい。","a":["14"]},{"q":"√8×√18 を計算しなさい。","a":["12"]},{"q":"√10×√40 を計算しなさい。","a":["20"]},{"q":"√12×√27 を計算しなさい。","a":["18"]},{"q":"√15×√60 を計算しなさい。","a":["30"]},{"q":"√18×√32 を計算しなさい。","a":["24"]},{"q":"√12÷√2 を計算しなさい。","a":["√6"]},{"q":"√27÷√3 を計算しなさい。","a":["3"]},{"q":"√48÷√12 を計算しなさい。","a":["2"]},{"q":"√75÷√5 を計算しなさい。","a":["√15"]},{"q":"√98÷√8 を計算しなさい。","a":["7/2"]},{"q":"√108÷√12 を計算しなさい。","a":["3"]},{"q":"√200÷√8 を計算しなさい。","a":["5"]},{"q":"√147÷√3 を計算しなさい。","a":["7"]},{"q":"√245÷√5 を計算しなさい。","a":["7"]},{"q":"√320÷√20 を計算しなさい。","a":["4"]}],"大小比較・ひっかけ":[{"q":"√16 と 4 の大小を比べなさい。","a":["等しい"]},{"q":"−√25 と −5 の大小を比べなさい。","a":["等しい"]},{"q":"√((-3)^2) と −3 の大小を比べなさい。","a":["左が大きい"]},{"q":"−√((-6)^2) と −6 の大小を比べなさい。","a":["等しい"]},{"q":"√9 と −3 の大小を比べなさい。","a":["左が大きい"]},{"q":"−√4 と √4 の大小を比べなさい。","a":["左が小さい"]},{"q":"√0 と 0 の大小を比べなさい。","a":["等しい"]},{"q":"√0.81 と 0.8 の大小を比べなさい。","a":["左が大きい"]},{"q":"√49 と 6 の大小を比べなさい。","a":["左が大きい"]},{"q":"√(4/9) と 2/3 の大小を比べなさい。","a":["等しい"]},{"q":"√2 と √3 の大小を比べなさい。","a":["左が小さい"]},{"q":"√10 と 3 の大小を比べなさい。","a":["左が大きい"]},{"q":"√15 と 4 の大小を比べなさい。","a":["左が小さい"]},{"q":"√24 と 5 の大小を比べなさい。","a":["左が小さい"]},{"q":"√30 と 5 の大小を比べなさい。","a":["左が大きい"]},{"q":"√((-4)^2) と 4 の大小を比べなさい。","a":["等しい"]},{"q":"−√16 と −3 の大小を比べなさい。","a":["左が小さい"]},{"q":"√1.21 と 1.1 の大小を比べなさい。","a":["等しい"]},{"q":"√0.16 と 0.5 の大小を比べなさい。","a":["左が小さい"]},{"q":"√64 と −8 の大小を比べなさい。","a":["左が大きい"]}],"総合問題":[{"q":"√12×√3 を計算しなさい。","a":["6"]},{"q":"√18÷√2 を計算しなさい。","a":["3"]},{"q":"2√3×√12 を計算しなさい。","a":["12"]},{"q":"3√2×√8 を計算しなさい。","a":["12"]},{"q":"√50÷√2 を計算しなさい。","a":["5"]},{"q":"√27×√3 を計算しなさい。","a":["9"]},{"q":"√75÷√3 を計算しなさい。","a":["5"]},{"q":"√20×√5 を計算しなさい。","a":["10"]},{"q":"√48÷√3 を計算しなさい。","a":["4"]},{"q":"√32×√2 を計算しなさい。","a":["8"]},{"q":"√8+√18 を計算しなさい。","a":["5√2"]},{"q":"√12+√27 を計算しなさい。","a":["5√3"]},{"q":"√50−√8 を計算しなさい。","a":["3√2"]},{"q":"√45−√20 を計算しなさい。","a":["√5"]},{"q":"2√3+3√3 を計算しなさい。","a":["5√3"]},{"q":"7√2−4√2 を計算しなさい。","a":["3√2"]},{"q":"√12+√3 を計算しなさい。","a":["3√3"]},{"q":"√27−√12 を計算しなさい。","a":["√3"]},{"q":"2√5+√45 を計算しなさい。","a":["5√5"]},{"q":"√75−2√3 を計算しなさい。","a":["3√3"]}]}};
+        // 出題前に同一内容の問題を除外し、毎回ランダムな順番に並べる
+        function normalizeQuestionText(value) {
+            return String(value || '')
+                .replace(/^(穴埋め：|確認問題：|語句チェック：)/, '')
+                .replace(/（空欄に入る語句は？|答えを入力）/g, '')
+                .replace(/[「」『』（）()、。！？!?・：:＿_\s]/g, '')
+                .toLowerCase();
+        }
+
+        function getUniqueQuestions(questions) {
+            const seen = new Set();
+            const unique = [];
+            for (const item of (Array.isArray(questions) ? questions : [])) {
+                const answerKey = (item.a || []).map(v => String(v).trim().toLowerCase()).sort().join('|');
+                const questionKey = normalizeQuestionText(item.q).replace(/である$/, '') + '|' + answerKey;
+                if (!item.q || !answerKey || seen.has(questionKey)) continue;
+                seen.add(questionKey);
+                unique.push(item);
+            }
+            return unique;
+        }
+
+        function shuffleQuestions(questions) {
+            const result = questions.slice();
+            for (let i = result.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [result[i], result[j]] = [result[j], result[i]];
+            }
+            return result;
+        }
+
+ 
+        function initializeQuizApp() {
+            const hideLoadingOverlay = () => {
+                const loader = document.getElementById('loading-overlay');
+                if (!loader) return;
+                loader.style.opacity = '0';
+                loader.style.pointerEvents = 'none';
+                window.setTimeout(() => {
+                    loader.style.display = 'none';
+                    loader.setAttribute('aria-hidden', 'true');
+                }, 500);
+            };
+
+            try {
+                if (typeof initAuthSystem === 'function') initAuthSystem();
+            } catch (e) {
+                console.error('Auth initialization failed:', e);
+            }
+
+            try {
+                if (typeof updateCurrencyUI === 'function') updateCurrencyUI();
+            } catch (e) {
+                console.error('Currency initialization failed:', e);
+            }
+
+            try {
+                if (typeof initGachaGlobe === 'function') initGachaGlobe();
+            } catch (e) {
+                console.error('Gacha initialization failed:', e);
+            } finally {
+                // どの初期化処理が失敗しても、ローディング表示を必ず解除する
+                hideLoadingOverlay();
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeQuizApp, { once: true });
+        } else {
+            initializeQuizApp();
+        }
+
+        function updateCurrencyUI() {
+            document.getElementById('goldVal').innerText = userGold;
+            document.getElementById('ecoVal').innerText = userEco;
+            document.getElementById('walletGoldVal').innerText = userGold;
+            document.getElementById('walletEcoVal').innerText = userEco;
+            __safeLocalStorage.setItem('gemini_gold', userGold.toString());
+            __safeLocalStorage.setItem('gemini_eco', userEco.toString());
+        }
+
+        // ウォレットを開閉する処理（ヘッダーの＋ボタンから呼び出す）
+        function openWalletModal() {
+            const wallet = document.getElementById('walletModal');
+            if (!wallet) return;
+            updateCurrencyUI();
+            wallet.classList.remove('opacity-0', 'pointer-events-none');
+            wallet.classList.add('opacity-100');
+            wallet.setAttribute('aria-hidden', 'false');
+        }
+
+        function closeWalletModal() {
+            const wallet = document.getElementById('walletModal');
+            if (!wallet) return;
+            wallet.classList.add('opacity-0', 'pointer-events-none');
+            wallet.classList.remove('opacity-100');
+            wallet.setAttribute('aria-hidden', 'true');
+        }
+
+        // ダイヤ10個をコイン100枚に交換
+        function exchangeDiamondsToCoins() {
+            if (userEco < 10) {
+                openModal('ダイヤが足りません', 'ダイヤが10個必要です。ガチャなどでダイヤを集めてください。');
+                return;
+            }
+            userEco -= 10;
+            userGold += 100;
+            updateCurrencyUI();
+            openWalletModal();
+            openModal('交換完了！', 'ダイヤ10個をコイン100枚に交換しました。');
+        }
+
+        // コイン100枚をダイヤ10個に交換
+        function exchangeCoinsToDiamonds() {
+            if (userGold < 100) {
+                openModal('コインが足りません', 'コインが100枚必要です。クイズに正解してコインを集めてください。');
+                return;
+            }
+            userGold -= 100;
+            userEco += 10;
+            updateCurrencyUI();
+            openWalletModal();
+            openModal('交換完了！', 'コイン100枚をダイヤ10個に交換しました。');
+        }
+
+        // 1日1回のボーナス（コイン50枚）
+        function claimDailyBonus() {
+            const today = new Date().toLocaleDateString('sv-SE');
+            const lastClaim = __safeLocalStorage.getItem('chatgpt_apps_daily_bonus_date') || '';
+            if (lastClaim === today) {
+                openModal('受け取り済み', '今日のデイリーボーナスは受け取り済みです。明日また受け取れます。');
+                return;
+            }
+            userGold += 50;
+            __safeLocalStorage.setItem('chatgpt_apps_daily_bonus_date', today);
+            updateCurrencyUI();
+            openWalletModal();
+            openModal('ボーナス獲得！', 'デイリーボーナスとしてコイン50枚を獲得しました。');
+        }
+ 
+        function showScreen(screenId) {
+            initAudio();
+            ['screen-home', 'screen-units', 'screen-playing', 'screen-gacha', 'screen-result'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById('screen-' + screenId).classList.remove('hidden');
+        }
+ 
+        function selectSubject(subjName) {
+            currentSubject = subjName;
+            document.getElementById('selectedSubjectTitle').innerText = subjName;
+            const container = document.getElementById('unitButtonsContainer');
+            container.innerHTML = '';
+ 
+            const units = QUIZ_DATABASE[subjName] || {};
+            const unitKeys = Object.keys(units);
+ 
+            // 数学の単元一覧内に平方根チャレンジへの入口を表示する
+            if (subjName === '数学') {
+                const sqrtBtn = document.createElement('button');
+                sqrtBtn.className = 'unit-card-anim p-4 bg-gradient-to-r from-cyan-950 to-blue-950 border border-cyan-400/60 hover:border-cyan-300 hover:bg-slate-800 rounded-2xl text-left transition-all font-black text-xs sm:text-sm text-cyan-100 flex justify-between items-center shadow-lg group';
+                sqrtBtn.style.animationDelay = '0ms';
+                sqrtBtn.onclick = () => selectSubject('平方根');
+                sqrtBtn.innerHTML = `
+                    <div>
+                        <span class="text-cyan-300 text-[10px] block font-mono">CHALLENGE</span>
+                        <span class="text-sm font-black">√ 平方根200問チャレンジ</span>
+                        <span class="text-xs font-normal text-cyan-300 block mt-1">基本問題・計算・有理化・ひっかけ問題</span>
+                    </div>
+                    <span class="text-cyan-300 group-hover:translate-x-1 transition-all">START ➔</span>
+                `;
+                container.appendChild(sqrtBtn);
+            }
+ 
+            if (unitKeys.length === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-500 col-span-2 text-center py-4">準備中の単元です</p>';
+            } else {
+                unitKeys.forEach((unitKey, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'unit-card-anim p-4 bg-slate-900 border border-cyan-500/30 hover:border-cyan-400 hover:bg-slate-800 rounded-2xl text-left transition-all font-bold text-xs sm:text-sm text-white flex justify-between items-center shadow-lg group hover:scale-[1.02] active:scale-95';
+                    btn.style.animationDelay = `${index * 80}ms`;
+                    btn.onclick = () => startUnitQuiz(subjName, unitKey);
+                    btn.innerHTML = `
+                        <div>
+                            <span class="text-cyan-400 text-[10px] block font-mono">UNIT</span>
+                            <span class="text-white text-sm font-bold">${unitKey}</span>
+                        </div>
+                        <span class="text-slate-500 group-hover:text-cyan-400 group-hover:translate-x-1 transition-all">START ➔</span>
+                    `;
+                    container.appendChild(btn);
+                });
+            }
+            showScreen('units');
+        }
+ 
+        function startUnitQuiz(subj, unitKey) {
+            currentSubject = subj;
+            currentUnitKey = unitKey;
+            currentQuestions = shuffleQuestions(getUniqueQuestions(QUIZ_DATABASE[subj][unitKey] || []));
+            qIndex = 0;
+            score = 0;
+ 
+            document.getElementById('subjectTag').innerText = subj;
+            document.getElementById('unitTag').innerText = unitKey;
+            showScreen('playing');
+            renderQuestion();
+        }
+ 
+        function renderQuestion() {
+            if (qIndex >= currentQuestions.length) {
+                showQuizResult();
+                return;
+            }
+            const q = currentQuestions[qIndex];
+            document.getElementById('qIndicator').innerText = `Q ${qIndex + 1}/${currentQuestions.length}`;
+            document.getElementById('currentScore').innerText = `${score * 20} pt`;
+            document.getElementById('qText').innerText = q.q;
+            const answerInput = document.getElementById('ansInput');
+            answerInput.value = '';
+            const isKanjiReadingQuestion = currentSubject === '国語'
+                && currentUnitKey.includes('漢字')
+                && currentUnitKey.includes('読み')
+                && q.q.includes('読み');
+            answerInput.placeholder = isKanjiReadingQuestion ? 'ひらがなで入力...' : '答えを入力...';
+            answerInput.setAttribute('aria-label', isKanjiReadingQuestion ? 'ひらがなで答えを入力' : '答えを入力');
+            answerInput.focus();
+            document.getElementById('answerCorrection').classList.add('hidden');
+            document.getElementById('submitBtn').disabled = false;
+        }
+ 
+        function checkAnswer() {
+            initAudio();
+            const input = document.getElementById('ansInput').value.trim().toLowerCase();
+            if (!input) return;
+ 
+            const q = currentQuestions[qIndex];
+            const isKanjiReadingQuestion = currentSubject === '国語'
+                && currentUnitKey.includes('漢字')
+                && currentUnitKey.includes('読み')
+                && q.q.includes('読み');
+
+            // 漢字の読み問題では、ひらがなでの入力だけを受け付ける
+            if (isKanjiReadingQuestion && !/^[ぁ-ゖー・]+$/.test(input)) {
+                showFeedback('ひらがなで入力してね', 'text-red-500');
+                document.getElementById('ansInput').focus();
+                return;
+            }
+
+            document.getElementById('submitBtn').disabled = true;
+            const isCorrect = q.a.some(ans => ans.toLowerCase() === input);
+ 
+            if (isCorrect) {
+                score++;
+                playSound('correct');
+                showFeedback('正解！', 'text-cyan-400');
+                userGold += 20;
+                userEco += 2;
+                updateCurrencyUI();
+                qIndex++;
+                setTimeout(renderQuestion, 1000);
+            } else {
+                playSound('wrong');
+                showFeedback('不正解...', 'text-red-500');
+                document.getElementById('correctText').innerText = q.a.join(' / ');
+                document.getElementById('answerCorrection').classList.remove('hidden');
+                setTimeout(() => {
+                    qIndex++;
+                    renderQuestion();
+                }, 2500);
+            }
+        }
+ 
+        document.getElementById('ansInput')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') checkAnswer();
+        });
+ 
+        function showFeedback(text, colorClass) {
+            const fb = document.getElementById('globalFeedback');
+            fb.innerText = text;
+            fb.className = `fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-[100] text-5xl sm:text-7xl font-black italic opacity-100 scale-110 transition-all duration-300 ${colorClass}`;
+            
+            if (feedbackTimeout) clearTimeout(feedbackTimeout);
+            
+            feedbackTimeout = setTimeout(() => {
+                fb.classList.remove('opacity-100', 'scale-110');
+                fb.classList.add('opacity-0', 'scale-100');
+            }, 800);
+        }
+ 
+        function showQuizResult() {
+            const summary = `正解数: ${score} / ${currentQuestions.length}\n※この1周では同じ問題は重複しません。\n獲得コイン: 🪙 ${score * 20}\n獲得ダイヤ: 💎 ${score * 2}`;
+            document.getElementById('resSummary').innerText = summary;
+            
+            if (score === currentQuestions.length) {
+                playSound('reward');
+                document.getElementById('resSummary').innerHTML += `<br><br><span class="text-yellow-400">PERFECT BONUS! 💎 +5</span>`;
+                userEco += 5;
+                updateCurrencyUI();
+            }
+            
+            showScreen('result');
+        }
+ 
+        function openGachaGame() {
+            toggleSidebar(); // Close sidebar if open
+            initGachaGlobe();
+            document.getElementById('gachaDropZone').innerHTML = `<p id="gachaPromptText" class="text-xs font-bold text-slate-500 animate-pulse">ハンドルを回してガチャを起動</p>`;
+            showScreen('gacha');
+        }
+ 
+        function initGachaGlobe() {
+            const globe = document.getElementById('gachaGlobeInner');
+            globe.innerHTML = '';
+            const colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
+            
+            for (let i = 0; i < 15; i++) {
+                const ball = document.createElement('div');
+                ball.className = 'capsule-in-globe';
+                const col = colors[Math.floor(Math.random() * colors.length)];
+                
+                // Random positioning
+                const top = 20 + Math.random() * 50;
+                const left = 10 + Math.random() * 70;
+                
+                ball.style.top = `${top}%`;
+                ball.style.left = `${left}%`;
+                ball.style.background = `linear-gradient(135deg, ${col} 50%, #ffffff 50%)`;
+                
+                globe.appendChild(ball);
+            }
+        }
+ 
+        function pullGacha() {
+            if (gachaSpinning) return;
+            if (userGold < 100) {
+                openModal('COIN 不足', 'ガチャを回すには 100 COINS 必要です。\nクイズに正解してコインを集めましょう！');
+                return;
+            }
+ 
+            gachaSpinning = true;
+            userGold -= 100;
+            updateCurrencyUI();
+            
+            initAudio();
+            playSound('gacha');
+ 
+            // Handle animation
+            const handle = document.getElementById('gachaHandle');
+            handle.classList.add('rotate');
+            
+            // Shake balls
+            document.querySelector('.gacha-3d-box').classList.add('shake-balls');
+ 
+            // Reset UI
+            const dropZone = document.getElementById('gachaDropZone');
+            dropZone.innerHTML = '';
+            document.getElementById('btnPullGacha').disabled = true;
+ 
+            setTimeout(() => {
+                handle.classList.remove('rotate');
+                document.querySelector('.gacha-3d-box').classList.remove('shake-balls');
+                dropCapsule();
+            }, 600);
+        }
+ 
+        function dropCapsule() {
+            const dropZone = document.getElementById('gachaDropZone');
+            
+            const rand = Math.random();
+            let rarity, color, reward;
+            
+            if (rand < 0.05) {
+                rarity = 'SSR'; color = '#ef4444'; reward = 100; // Red
+            } else if (rand < 0.30) {
+                rarity = 'SR'; color = '#eab308'; reward = 30; // Yellow
+            } else {
+                rarity = 'N'; color = '#3b82f6'; reward = 10; // Blue
+            }
+ 
+            const cap = document.createElement('div');
+            cap.className = `dropped-capsule ${rarity === 'SSR' ? 'rarity-glow-SSR' : ''}`;
+            cap.innerHTML = `
+                <div class="capsule-half-top" style="background-color: ${color};"></div>
+                <div class="capsule-half-bottom"></div>
+            `;
+ 
+            cap.onclick = () => openCapsule(cap, rarity, reward);
+            dropZone.appendChild(cap);
+        }
+ 
+        function openCapsule(capElement, rarity, reward) {
+            if (capElement.classList.contains('capsule-opened')) return;
+            
+            capElement.classList.add('capsule-opened');
+            capElement.style.cursor = 'default';
+            
+            if (rarity === 'SSR') playSound('ssr');
+            else playSound('reward');
+ 
+            setTimeout(() => {
+                const dropZone = document.getElementById('gachaDropZone');
+                let rarityColor = rarity === 'SSR' ? 'text-red-500' : (rarity === 'SR' ? 'text-yellow-400' : 'text-blue-400');
+                
+                dropZone.innerHTML = `
+                    <div class="text-center animate-[unitPopIn_0.5s_ease-out_forwards]">
+                        <h3 class="text-3xl font-black italic ${rarityColor} mb-1">${rarity}</h3>
+                        <p class="text-lg font-bold text-white">💎 +${reward} ダイヤ獲得！</p>
+                    </div>
+                `;
+                
+                userEco += reward;
+                updateCurrencyUI();
+                
+                document.getElementById('btnPullGacha').disabled = false;
+                gachaSpinning = false;
+            }, 500);
+        }
+ 
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const isPlaying = !document.getElementById('screen-playing').classList.contains('hidden');
+            
+            const hideOnPlayingElements = document.querySelectorAll('.hide-on-playing');
+            const interruptSection = document.getElementById('interruptSection');
+            
+            if (isPlaying) {
+                hideOnPlayingElements.forEach(el => el.classList.add('hidden'));
+                if (interruptSection) interruptSection.classList.remove('hidden');
+            } else {
+                hideOnPlayingElements.forEach(el => el.classList.remove('hidden'));
+                if (interruptSection) interruptSection.classList.add('hidden');
+            }
+ 
+            if (sidebar.classList.contains('translate-x-full')) {
+                sidebar.classList.remove('translate-x-full');
+            } else {
+                sidebar.classList.add('translate-x-full');
+            }
+        }
+ 
+        function interruptQuiz() {
+            toggleSidebar();
+            showScreen('units');
+        }
+ 
+        function toggleUserSettings() {
+            const content = document.getElementById('userSettingsContent');
+            const arrow = document.getElementById('userSettingsArrow');
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                arrow.style.transform = 'rotate(180deg)';
+            } else {
+                content.classList.add('hidden');
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+    </script>
+</body>
+</html>
